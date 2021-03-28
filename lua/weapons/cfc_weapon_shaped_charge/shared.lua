@@ -23,9 +23,9 @@ SWEP.Secondary.DefaultClip  = -1
 SWEP.Secondary.Automatic    = false
 SWEP.Secondary.Ammo         = "none"
 
-CreateConVar( "cfc_shaped_charge_chargehealth", 100, FCVAR_REPLICATED, "Health of placed charges.", 0 )
-CreateConVar( "cfc_shaped_charge_maxcharges", 1, FCVAR_REPLICATED, "Maxmium amount of charges active per person at once.", 0 )
-CreateConVar( "cfc_shaped_charge_timer", 10, FCVAR_REPLICATED, "The time it takes for a charges to detonate.", 0 )
-CreateConVar( "cfc_shaped_charge_blastdamage", 0, FCVAR_REPLICATED, "The damage the explosive does to players when it explodes.", 0 )
-CreateConVar( "cfc_shaped_charge_blastrange", 100, FCVAR_REPLICATED, "The damage range the explosion has.", 0 )
-CreateConVar( "cfc_shaped_charge_tracerange", 100, FCVAR_REPLICATED, "The range the prop breaking explosion has.", 0 )
+CreateConVar( "cfc_shaped_charge_chargehealth", 100, { FCVAR_REPLICATED, FCVAR_ARCHIVE }, "Health of placed charges.", 0 )
+CreateConVar( "cfc_shaped_charge_maxcharges", 1, { FCVAR_REPLICATED, FCVAR_ARCHIVE }, "Maxmium amount of charges active per person at once.", 0 )
+CreateConVar( "cfc_shaped_charge_timer", 10, { FCVAR_REPLICATED, FCVAR_ARCHIVE }, "The time it takes for a charges to detonate.", 0 )
+CreateConVar( "cfc_shaped_charge_blastdamage", 0, { FCVAR_REPLICATED, FCVAR_ARCHIVE }, "The damage the explosive does to players when it explodes.", 0 )
+CreateConVar( "cfc_shaped_charge_blastrange", 100, { FCVAR_REPLICATED, FCVAR_ARCHIVE }, "The damage range the explosion has.", 0 )
+CreateConVar( "cfc_shaped_charge_tracerange", 100, { FCVAR_REPLICATED, FCVAR_ARCHIVE }, "The range the prop breaking explosion has.", 0 )
