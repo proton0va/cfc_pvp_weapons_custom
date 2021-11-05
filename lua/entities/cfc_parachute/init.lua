@@ -62,8 +62,8 @@ function ENT:Initialize()
     end
 
     self:SetModel( "models/cfc/parachute/chute.mdl" )
-    self:PhysicsInit( SOLID_VPHYSICS )
-    self:SetSolid( SOLID_VPHYSICS )
+    self:PhysicsInit( SOLID_NONE )
+    self:SetSolid( SOLID_NONE )
     self:DrawShadow( false )
     self:SetCollisionGroup( COLLISION_GROUP_IN_VEHICLE )
     self:SetRenderMode( RENDERMODE_TRANSCOLOR )
