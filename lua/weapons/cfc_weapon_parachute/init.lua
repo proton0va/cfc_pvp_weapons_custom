@@ -18,6 +18,15 @@ local UNSTABLE_LURCH_CHANCE = GetConVar( "cfc_parachute_destabilize_lurch_chance
 local COLOR_SHOW = Color( 255, 255, 255, 255 )
 local COLOR_HIDE = Color( 255, 255, 255, 0 )
 
+local MOVE_KEYS = {
+    IN_JUMP,
+    IN_FORWARD,
+    IN_BACK,
+    IN_MOVERIGHT,
+    IN_MOVELEFT
+}
+local MOVE_KEY_COUNT = #MOVE_KEYS
+
 function SWEP:Initialize()
     self.chuteCanUnfurl = true
     self.chuteMoveForward = 0
@@ -110,7 +119,7 @@ function SWEP:SpawnChute()
     timer.Simple( 0.02, function()
         local owner = self:GetOwner() or chute.chuteOwner
 
-        if not IsValid( owner ) then return end
+        if not IsValid( owner ) or not owner:IsPlayer() then return end
 
         local shouldBeUnfurled = owner:GetInfoNum( "cfc_parachute_unfurl_invert", 0 ) ~= 0
         chute.chuteIsUnfurled = shouldBeUnfurled
@@ -120,6 +129,8 @@ function SWEP:SpawnChute()
         net.WriteEntity( chute )
         net.WriteBool( shouldBeUnfurled )
         net.Broadcast()
+
+        self:UpdateMoveKeys()
     end )
 
     return chute
@@ -497,5 +508,20 @@ function SWEP:KeyPress( ply, key, state )
         if not self.chuteIsOpen then return end
 
         self:SetChuteDirection()
+    end
+end
+
+function SWEP:UpdateMoveKeys()
+    local owner = self:GetOwner()
+    owner = IsValid( owner ) and owner or self.chuteOwner
+
+    if not IsValid( owner ) or not owner:IsPlayer() then return end
+
+    for i = 1, MOVE_KEY_COUNT do
+        local moveKey = MOVE_KEYS[i]
+
+        if moveKey ~= IN_JUMP or owner:GetInfoNum( "cfc_parachute_unfurl_toggle", 0 ) == 0 then
+            self:KeyPress( owner, moveKey, owner:KeyDown( moveKey ) )
+        end
     end
 end
