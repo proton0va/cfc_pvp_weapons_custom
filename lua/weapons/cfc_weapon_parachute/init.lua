@@ -43,8 +43,13 @@ function SWEP:Initialize()
 end
 
 function SWEP:OnRemove()
-    CFC_Parachute.AllChuteSwepsCount = CFC_Parachute.AllChuteSwepsCount - 1
-    table.RemoveByValue( CFC_Parachute.AllChuteSweps, SWEP )
+    local allChuteSweps = CFC_Parachute.AllChuteSweps
+    local chuteInd = table.KeyFromValue( allChuteSweps, self )
+
+    if chuteInd then
+        CFC_Parachute.AllChuteSwepsCount = CFC_Parachute.AllChuteSwepsCount - 1
+        table.remove( allChuteSweps, chuteInd )
+    end
 
     timer.Remove( "CFC_Parachute_UnstableDirectionChange_" .. self:EntIndex() )
 

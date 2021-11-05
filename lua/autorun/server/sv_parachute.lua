@@ -249,13 +249,22 @@ hook.Add( "WeaponEquip", "CFC_Parachute_ChangeOwner", changeOwner )
 
 hook.Add( "Think", "CFC_Parachute_ApplyChuteForces", function()
     local count = CFC_Parachute.AllChuteSwepsCount
+    local didRemove = false
 
-    for i = 1, count do
+    for i = count, 1, -1 do
         local wep = allChuteSweps[i]
 
         if IsValid( wep ) then
             wep:ApplyChuteForces()
+        else
+            didRemove = true
+
+            table.remove( allChuteSweps, i )
         end
+    end
+
+    if didRemove then
+        CFC_Parachute.AllChuteSwepsCount = #allChuteSweps
     end
 end )
 
