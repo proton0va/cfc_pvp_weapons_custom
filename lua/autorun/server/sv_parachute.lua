@@ -263,7 +263,7 @@ hook.Add( "Think", "CFC_Parachute_ApplyChuteForces", function()
         end
     end
 
-    if didRemove then
+    if didRemove then -- In case SWEP:OnRemove() ever goes wonky or the count gets misaligned
         CFC_Parachute.AllChuteSwepsCount = #allChuteSweps
     end
 end )
