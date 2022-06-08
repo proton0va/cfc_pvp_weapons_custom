@@ -13,13 +13,13 @@ function ENT:Draw()
     local fixAngles = self:GetAngles()
     local fixRotation = Vector( 0, 270, 0 )
 
-    fixAngles:RotateAroundAxis(fixAngles:Right(), fixRotation.x)
-    fixAngles:RotateAroundAxis(fixAngles:Up(), fixRotation.y)
-    fixAngles:RotateAroundAxis(fixAngles:Forward(), fixRotation.z)
+    fixAngles:RotateAroundAxis( fixAngles:Right(), fixRotation.x )
+    fixAngles:RotateAroundAxis( fixAngles:Up(), fixRotation.y )
+    fixAngles:RotateAroundAxis( fixAngles:Forward(), fixRotation.z )
 
     local TargetPos = self:GetPos() + self:GetUp() * 9
 
-    local timeLeft = math.Clamp( self.explodeTime - CurTime(), 0, 999999)
+    local timeLeft = math.Clamp( self.explodeTime - CurTime(), 0, 999999 )
 
     local minutes, seconds = self:FormatTime( timeLeft )
     self.Text = string.format( "%02d", minutes ) .. ":" .. string.format( "%02d", seconds )

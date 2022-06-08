@@ -2,10 +2,10 @@ AddCSLuaFile( "cl_init.lua" )
 AddCSLuaFile( "shared.lua" )
 include( "shared.lua" )
 
-local breakableClasses = {
-    prop_physics = true,
-    sent_spawnpoint = true
-}
+-- local breakableClasses = {
+--     prop_physics = true,
+--     sent_spawnpoint = true
+-- }
 
 if file.Exists( "includes/modules/mixpanel.lua", "LUA" ) then
     require( "mixpanel" )
@@ -64,7 +64,7 @@ function ENT:OnTakeDamage( dmg )
 
         local attacker = dmg:GetAttacker()
         local weaponClass = "invalid weapon"
-    
+
         if IsValid( attacker ) and attacker:IsPlayer() then
             local weapon = attacker:GetActiveWeapon()
             if IsValid( weapon ) then
@@ -73,7 +73,7 @@ function ENT:OnTakeDamage( dmg )
         else
             weaponClass = attacker:GetClass()
         end
-        mixpanelTrackEvent( "Shaped charge broken", self.bombOwner, {owner = self.bombOwner, breaker = dmg:GetAttacker(), weapon = weaponClass } )
+        mixpanelTrackEvent( "Shaped charge broken", self.bombOwner, { owner = self.bombOwner, breaker = dmg:GetAttacker(), weapon = weaponClass } )
 
         local effectdata = EffectData()
         effectdata:SetOrigin( self:GetPos() )
@@ -139,7 +139,7 @@ function ENT:Explode()
 
     local effectdata = EffectData()
     effectdata:SetOrigin( self:GetPos() )
-    effectdata:SetNormal( -self:GetUp())
+    effectdata:SetNormal( -self:GetUp() )
     effectdata:SetRadius( 3 )
 
     util.Effect( "AR2Explosion", effectdata )

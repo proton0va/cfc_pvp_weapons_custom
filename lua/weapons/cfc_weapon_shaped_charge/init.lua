@@ -21,7 +21,7 @@ function SWEP:PrimaryAttack()
     local viewTrace = {}
     viewTrace.start = self:GetOwner():GetShootPos()
     viewTrace.endpos = self:GetOwner():GetShootPos() + 100 * self:GetOwner():GetAimVector()
-    viewTrace.filter = {self:GetOwner()}
+    viewTrace.filter = { self:GetOwner() }
     local trace = util.TraceLine( viewTrace )
 
     local hitWorld = trace.HitNonWorld == false
