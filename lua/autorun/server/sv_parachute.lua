@@ -9,7 +9,6 @@ local UNSTABLE_SHOOT_LURCH_CHANCE = GetConVar( "cfc_parachute_destabilize_shoot_
 local UNSTABLE_SHOOT_DIRECTION_CHANGE_CHANCE = GetConVar( "cfc_parachute_destabilize_shoot_change_chance" )
 
 local DESIGN_MATERIALS
-local DESIGN_MATERIAL_NAMES
 local DESIGN_MATERIAL_COUNT = CFC_Parachute.DesignMaterialCount
 local DESIGN_REQUEST_BURST_LIMIT = 10
 local DESIGN_REQUEST_BURST_DURATION = 3
@@ -35,7 +34,7 @@ end
 
 function CFC_Parachute.SetDesignSelection( ply, oldDesign, newDesign )
     if not isValid( ply ) then return end
-    
+
     oldDesign = oldDesign or 1
     newDesign = newDesign or 1
 
@@ -92,7 +91,7 @@ function CFC_Parachute.TrySetupLFS()
 
     hook.Add( "PlayerLeaveVehicle", "CFC_Parachute_LFSAirEject", function( ply, vehicle )
         if not isValid( ply ) or not ply:IsPlayer() or not ply:Alive() or not isValid( vehicle ) then return end
-        
+
         local lfsPlane = vehicle.LFSBaseEnt
 
         if not isValid( lfsPlane ) then return end
@@ -177,7 +176,7 @@ function CFC_Parachute.TrySetupLFS()
             local forwardAng = lfsPlane:GetAngles()
             local pitchCorrect = math.Clamp( forwardAng.p, -bias, bias )
             local rollCorrect = math.Clamp( -forwardAng.r, -bias, bias )
-            
+
             forwardAng:RotateAroundAxis( lfsPlane:GetRight(), pitchCorrect )
             forwardAng:RotateAroundAxis( lfsPlane:GetForward(), rollCorrect )
 
@@ -211,7 +210,7 @@ function CFC_Parachute.TrySetupLFS()
 
         if serverDefault == "0" then return false end
     end )
-    
+
     hook.Add( "CFC_Parachute_CanLFSEjectLaunch", "CFC_Parachute_CheckEjectLaunchConVar", function( ply )
         local plyVal = ply:GetInfoNum( "cfc_parachute_lfs_eject_launch", 2 )
 
@@ -237,12 +236,8 @@ function CFC_Parachute.TrySetupLFS()
         for i = 1, #lfsPlanes do
             local plane = lfsPlanes[i]
 
-            if plane.GetDriverSeat then -- Verify that it's not some other type of LFS entity
-
-                if plane:GetPos():DistToSqr( plyPos ) <= radiusSqr then
-
-                    return plane
-                end
+            if plane.GetDriverSeat and plane:GetPos():DistToSqr( plyPos ) <= radiusSqr then -- Verify that it's not some other type of LFS entity
+                return plane
             end
         end
     end )
