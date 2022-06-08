@@ -27,8 +27,9 @@ local DESIGN_MATERIAL_NAMES
 local DESIGN_MATERIAL_COUNT
 
 local DESIGN_CHOICE = CreateConVar( "cfc_parachute_design", 1, { FCVAR_ARCHIVE, FCVAR_USERINFO, FCVAR_SERVER_CAN_EXECUTE, FCVAR_NEVER_AS_STRING }, "Your selected parachute design.", 1, 50000 )
-local UNFURL_TOGGLE = CreateClientConVar( "cfc_parachute_unfurl_toggle", 0, true, true, "When enabled, pressing jump will toggle the unfurl state instead of holding it. Jumps won't toggle unfurl if chute is closed.", 0, 1 )
 local UNFURL_INVERT = CreateClientConVar( "cfc_parachute_unfurl_invert", 0, true, true, "Whether or not your parachute will be unfurled by default. Don't forget to open it!", 0, 1 )
+CreateClientConVar( "cfc_parachute_unfurl_toggle", 0, true, true, "When enabled, pressing jump will toggle the unfurl state instead of holding it. Jumps won't toggle unfurl if chute is closed.", 0, 1 )
+
 
 local MENU_COLOR = Color( 36, 41, 67, 255 )
 local MENU_BAR_COLOR = Color( 42, 47, 74, 255 )
@@ -53,21 +54,19 @@ local ANG_GRAB_LEFT_FOREARM = Angle( -11, 7.2, 26.5 )
 local ANG_GRAB_LEFT_HAND = Angle( 0, 8.7, 0 )
 
 local LFS_EXISTS
-local LFS_AUTO_CHUTE
-local LFS_EJECT_LAUNCH
 
 table.insert( CFC_Parachute.MenuToggleButtons, {
     HideState = true,
     TextOff = "Help/Info",
     TextOn = "Help/Info",
-    HoverText = "Parachutes slow your descent and allow you to glide through the air faster than you can move on land." .. "\n\n" .. 
-        "Your chute will start off closed, and can be toggled open with left click." .. "\n" .. 
-        "While open, your chute will only slow your descent by a little. You must unfurl it as well with spacebar." .. "\n" .. 
-        "Right clicking with the parachute SWEP will bring up this config menu." .. "\n" .. 
-        "You can select various chute designs and config options with the buttons below." .. "\n\n" .. 
-        "With your parachute open, you can switch to a different weapon and shoot from the air." .. "\n" .. 
-        "Be careful though, while your hands are occupied, you cannot close/furl/unfurl the chute and" .. "\n" .. 
-        "you will lose a lot of horizontal control." .. "\n" .. 
+    HoverText = "Parachutes slow your descent and allow you to glide through the air faster than you can move on land." .. "\n\n" ..
+        "Your chute will start off closed, and can be toggled open with left click." .. "\n" ..
+        "While open, your chute will only slow your descent by a little. You must unfurl it as well with spacebar." .. "\n" ..
+        "Right clicking with the parachute SWEP will bring up this config menu." .. "\n" ..
+        "You can select various chute designs and config options with the buttons below." .. "\n\n" ..
+        "With your parachute open, you can switch to a different weapon and shoot from the air." .. "\n" ..
+        "Be careful though, while your hands are occupied, you cannot close/furl/unfurl the chute and" .. "\n" ..
+        "you will lose a lot of horizontal control." .. "\n" ..
         "Shooting too much will send you careening in a different direction, or even towards the ground."
 } )
 
@@ -124,14 +123,14 @@ function CFC_Parachute.CreateDesignPreview( x, y, ind, panel )
     icon:SetMaterial( DESIGN_MATERIALS[ind] )
 
     icon.designInd = ind
-    
+
     icon.DoClick = function()
         LocalPlayer():ConCommand( "cfc_parachute_design " .. ind )
     end
 
     local oldPaint = icon.Paint
 
-    icon.Paint = function( self, w, h )
+    icon.Paint = function( _, w, h )
         render.SuppressEngineLighting( true )
 
         oldPaint( icon, w, h )
@@ -163,7 +162,7 @@ end
 function CFC_Parachute.PaintButtonHover( panel )
     panel:SetTextColor( BUTTON_TEXT_HOVERED_COLOR )
 
-    panel.Paint = function( self, w, h )
+    panel.Paint = function( _, w, h )
         draw.RoundedBox( 0, 0, 0, w, h, TOOLTIP_OUTLINE_COLOR )
         draw.RoundedBox( 0, 1, 1, w - 2, h - 2, TOOLTIP_COLOR )
     end
@@ -224,7 +223,7 @@ end
 function CFC_Parachute.CreateToggleButton( x, y, ind, panel, w, h )
     local button = vgui.Create( "DButton", panel )
     local buttonData = CFC_Parachute.MenuToggleButtons[ind]
-    
+
     local convarName = buttonData.ConVar
     local convar = convarName and GetConVar( convarName )
     local offVal = buttonData.ConVarOff or "0"
@@ -284,10 +283,10 @@ function CFC_Parachute.OpenDesignMenu()
         window:Show()
         window:MakePopup()
 
-        for i, data in ipairs( CFC_Parachute.MenuToggleButtons ) do
+        for _, data in ipairs( CFC_Parachute.MenuToggleButtons ) do
             local convarName = data.ConVar
             local serverChoice = data.ConVarServerChoice
-    
+
             if convarName and serverChoice and GetConVar( convarName ):GetString() == serverChoice then
                 local button = data.DButton
 
@@ -395,15 +394,15 @@ hook.Add( "InitPostEntity", "CFC_Parachute_CheckOptionalDependencies", function(
 
     trySetupLFS()
 
-    for i, data in ipairs( CFC_Parachute.MenuToggleButtons ) do
+    for _, data in ipairs( CFC_Parachute.MenuToggleButtons ) do
         local convarName = data.ConVar
 
         if convarName then
-            cvars.AddChangeCallback( convarName, function( _, old, new )
+            cvars.AddChangeCallback( convarName, function()
                 local button = data.DButton
 
                 if not button then return end
-                
+
                 button:SetText( button.cfcParachuteIntendedText() )
 
                 local tooltip = button.cfcParachuteTooltip
