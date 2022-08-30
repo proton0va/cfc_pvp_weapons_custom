@@ -5,7 +5,6 @@ include( "shared.lua" )
 
 CFC_Parachute = CFC_Parachute or {}
 
-local DRAG_CUTOFF = 15 -- Don't apply drag if the value is equal to or lower than this (prevents near-infinite gliding)
 local UNSTABLE_MIN_GAP = GetConVar( "cfc_parachute_destabilize_min_gap" )
 local UNSTABLE_MAX_GAP = GetConVar( "cfc_parachute_destabilize_max_gap" )
 local UNSTABLE_MAX_DIR_CHANGE = GetConVar( "cfc_parachute_destabilize_max_direction_change" )
@@ -14,6 +13,36 @@ local UNSTABLE_LURCH_CHANCE = GetConVar( "cfc_parachute_destabilize_lurch_chance
 
 local COLOR_SHOW = Color( 255, 255, 255, 255 )
 local COLOR_HIDE = Color( 255, 255, 255, 0 )
+local TRACE_HULL_SCALE_DOWN = Vector( 0.95, 0.95, 0.01 )
+local GROUND_CLASS_IGNORE = { -- Classes that should be ignored for the CloseIfOnGround() check
+    -- HL2
+    crossbow_bolt = true,
+    prop_combine_ball = true,
+    npc_satchel = true,
+    npc_grenade_frag = true,
+    -- CW2
+    ent_ins2rpgrocket = true,
+    cw_grenade_thrown = true,
+    cw_flash_thrown = true,
+    cw_smoke_thrown = true,
+    cw_40mm_explosive = true,
+    -- LFS
+    lunasflightschool_missile = true,
+    -- M9K
+    m9k_proxy = true,
+    m9k_thrown_nitrox = true,
+    m9k_thrown_m61 = true,
+    m9k_thrown_sticky_grenade = true,
+    m9k_thrown_harpoon = true,
+    m9k_nervegasnade = true,
+    m9k_ammo_rpg_heat = true,
+    m9k_thrown_knife = true,
+    m9k_ammo_matador_90mm = true,
+    m9k_launched_m79 = true,
+    m9k_launched_flare = true,
+    -- Misc
+    env_flare = true,
+}
 
 local MOVE_KEYS = {
     IN_FORWARD,
@@ -95,12 +124,6 @@ function SWEP:SpawnChute()
     self.chuteIsUnfurled = false
     self.chuteDir = Vector( 0, 0, 0 )
 
-    self.chuteDrag  = GetConVar( "cfc_parachute_drag" ):GetFloat()
-    self.chuteDragUnfurled  = GetConVar( "cfc_parachute_drag_unfurled" ):GetFloat()
-    self.chuteSpeed  = GetConVar( "cfc_parachute_speed" ):GetFloat()
-    self.chuteSpeedUnfurled  = GetConVar( "cfc_parachute_speed_unfurled" ):GetFloat()
-    self.chuteSpeedMax  = GetConVar( "cfc_parachute_speed_max" ):GetFloat()
-
     hook.Run( "CFC_Parachute_ChuteCreated", chute )
 
     timer.Simple( 0.02, function()
@@ -123,52 +146,6 @@ function SWEP:SpawnChute()
     return chute
 end
 
-function SWEP:ApplyChuteForces()
-    if not self.chuteIsOpen then return end
-
-    local owner = self:GetOwner() or self.chuteOwner
-
-    if not isValid( owner ) then return end
-
-    local vel = owner:GetVelocity()
-    local drag = math.max( -vel.z, 0 )
-
-    if drag < DRAG_CUTOFF then return end
-
-    local thrustDir
-
-    local unfurled = self.chuteIsUnfurled
-    local thrust = drag * ( unfurled and self.chuteSpeedUnfurled or self.chuteSpeed )
-
-    if self.chuteIsUnstable then
-        thrustDir = self.chuteDir
-    else
-        local eyeAngles = owner:EyeAngles()
-        local eyeForward = eyeAngles:Forward()
-        local eyeRight = eyeAngles:Right()
-        local chuteDir = self.chuteDir
-
-        thrustDir = ( eyeForward * chuteDir.x + eyeRight * chuteDir.y ) * Vector( 1, 1, 0 )
-    end
-
-    local speedMax = self.chuteSpeedMax
-    local curSpeed = ( vel.x ^ 2 + vel.y ^ 2 ) ^ 0.5
-    local lurch = self.chuteLurch
-
-    drag = drag * ( unfurled and self.chuteDragUnfurled or self.chuteDrag )
-    thrust = math.min( thrust, self.chuteSpeedMax - curSpeed - thrust )
-
-    if curSpeed > speedMax * 1.5 then
-        owner:SetVelocity( Vector( 0, 0, drag + lurch ) - vel * Vector( 1, 1, 0 ) )
-    else
-        owner:SetVelocity( Vector( 0, 0, drag + lurch ) + thrustDir * thrust )
-    end
-
-    if lurch ~= 0 then
-        self.chuteLurch = 0
-    end
-end
-
 function SWEP:SetChuteDirection()
     local chuteDir = Vector( self.chuteMoveForward - self.chuteMoveBack, self.chuteMoveRight - self.chuteMoveLeft, 0 )
 
@@ -181,6 +158,7 @@ function SWEP:SetChuteDirection()
     chuteDir:Normalize()
 
     self.chuteDir = chuteDir
+    self.chuteDirAng = chuteDir:Angle()
 end
 
 function SWEP:ChangeOwner( ply )
@@ -217,7 +195,7 @@ function SWEP:ChangeOpenStatus( state, ply )
         state = not prevState
     elseif state == prevState then return end
 
-    if owner:IsOnGround() and state then return end
+    if state and ( owner:IsOnGround() or owner:WaterLevel() > 0 ) then return end
 
     local chute = self:SpawnChute()
 
@@ -246,6 +224,51 @@ function SWEP:ChangeOpenStatus( state, ply )
     net.Broadcast()
 end
 
+function SWEP:CloseIfOnGround()
+    if not self.chuteIsOpen then return end
+
+    local owner = self.chuteOwner
+
+    if not isValid( owner ) then return end
+
+    -- Extends the trace length to ensure the player doesn't clip into the floor, even at (reasonably) high velocities
+    local extendByVelMult = 0.5
+    local extendByVelMax = 30
+    local extendFlat = 4
+
+    local velZ = owner:GetVelocity()[3]
+    local traceExtend = extendFlat
+
+    if velZ < 0 then
+        traceExtend = traceExtend + math.min( -velZ * extendByVelMult, extendByVelMax )
+    end
+
+    local tr = util.TraceHull( {
+        start = owner:GetPos() + Vector( 0, 0, owner:OBBMaxs()[3] * 0.9 ),
+        endpos = owner:GetPos() + Vector( 0, 0, -traceExtend ),
+        mins = owner:OBBMins() * TRACE_HULL_SCALE_DOWN,
+        maxs = owner:OBBMaxs() * TRACE_HULL_SCALE_DOWN,
+        filter = owner,
+    } )
+
+    if tr.Hit then
+        local ent = tr.Entity
+
+        -- Don't close from projectiles like crossbow bolts or RPGs. Annoyingly, all these objects have different collision groups, etc, and aren't standardized at all.
+        if isValid( ent ) and GROUND_CLASS_IGNORE[ent:GetClass()] then return end
+
+        self:ChangeOpenStatus( false )
+    end
+end
+
+function SWEP:CloseIfInWater()
+    if not self.chuteIsOpen then return end
+    if self:WaterLevel() == 0 then return end
+    -- Water level updates seem to get suppressed on the player while using the Move hook, but we can conveniently check the swep instead
+
+    self:ChangeOpenStatus( false )
+end
+
 function SWEP:ApplyUnstableLurch()
     local owner = self:GetOwner()
 
@@ -266,6 +289,7 @@ function SWEP:ApplyUnstableDirectionChange()
     local chuteDir = self.chuteDir
 
     chuteDir:Rotate( Angle( 0, math.Rand( maxChange, maxChange ), 0 ) )
+    self.chuteDirAng = chuteDir:Angle()
 
     net.Start( "CFC_Parachute_DefineChuteDir" )
     net.WriteEntity( self:SpawnChute() )
@@ -311,6 +335,7 @@ function SWEP:ChangeInstabilityStatus( state )
         end
 
         self.chuteDir = ( eyeForward * chuteDir.x + eyeRight * chuteDir.y ) * Vector( 1, 1, 0 )
+        self.chuteDirAng = chuteDir:Angle()
 
         self:CreateUnstableDirectionTimer()
     else

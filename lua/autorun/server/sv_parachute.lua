@@ -5,8 +5,18 @@ CFC_Parachute.DesignMaterialNames = false
 CFC_Parachute.DesignMaterialCount = 21 -- Default value for in case someone changes their design without anyone having spawned a parachute swep yet
 CFC_Parachute.DesignMaterialSub = string.len( "models/cfc/parachute/parachute_" ) + 1
 
-local UNSTABLE_SHOOT_LURCH_CHANCE = GetConVar( "cfc_parachute_destabilize_shoot_lurch_chance" )
-local UNSTABLE_SHOOT_DIRECTION_CHANGE_CHANCE = GetConVar( "cfc_parachute_destabilize_shoot_change_chance" )
+local UNSTABLE_SHOOT_LURCH_CHANCE
+local UNSTABLE_SHOOT_DIRECTION_CHANGE_CHANCE
+local UNSTABLE_MAX_FALL_LURCH
+local FALL_SPEED
+local FALL_SPEED_UNFURLED
+local FALL_LERP
+local HORIZONTAL_SPEED
+local HORIZONTAL_SPEED_UNFURLED
+local HORIZONTAL_SPEED_UNSTABLE
+local HORIZONTAL_SPEED_LIMIT
+local SPRINT_BOOST
+local HANDLING
 
 local DESIGN_MATERIALS
 local DESIGN_MATERIAL_COUNT = CFC_Parachute.DesignMaterialCount
@@ -19,7 +29,33 @@ local LFS_EJECT_LAUNCH_FORCE
 local LFS_EJECT_LAUNCH_BIAS
 local LFS_ENTER_RADIUS
 
+local TRACE_HULL_SCALE_SIDEWAYS = Vector( 1.05, 1.05, 1.05 )
+local TRACE_HULL_SCALE_DOWN = Vector( 0.95, 0.95, 0.01 )
+local VEC_REMOVE_Z = Vector( 1, 1, 0 )
+local VEC_ZERO = Vector( 0, 0, 0 )
+local ANG_ZERO = Angle( 0, 0, 0 )
+local VIEW_PUNCH_CHECK_INTERVAL = 0.25
+
 local isValid = IsValid
+local realTime = RealTime
+
+
+local function mSign( x )
+    if x == 0 then return 0 end
+    if x > 0 then return 1 end
+    return -1
+end
+
+-- Individually scales up the x and y axes so they each have magnitude >= min
+-- Doesn't scale the whole vector at once since a tiny x could result in a huge y, etc
+local function minBoundVector( vec, xMin, yMin )
+    local x = vec[1]
+    local y = vec[2]
+    x = mSign( x ) * math.max( math.abs( x ), xMin )
+    y = mSign( y ) * math.max( math.abs( y ), yMin )
+
+    return Vector( x, y, vec[3] )
+end
 
 local function changeOwner( wep, ply )
     if not isValid( wep ) then return end
@@ -30,6 +66,198 @@ local function changeOwner( wep, ply )
 
         wep:ChangeOwner( ply )
     end )
+end
+
+--[[
+    - Increases the magnitude of velAdd if it opposes vel.
+    - Ultimately makes it faster to brake and change directions.
+    - To reduce the number of square-root calls, velAdd should be given as a unit vector.
+--]]
+local function improveHandling( vel, velAdd )
+    local velLength = vel:Length()
+
+    if velLength == 0 then return velAdd end
+
+    local dot = vel:Dot( velAdd )
+    dot = dot / velLength -- Get dot product on 0-1 scale
+
+    if dot >= 0 then return velAdd end
+
+    local mult = math.max( -dot * HANDLING:GetFloat(), 1 )
+
+    return velAdd * mult
+end
+
+-- uses a TraceLine to see if a velocity does NOT clip into a wall when we don't know the wall's position or normal
+local function velLeavesCloseWall( ply, startPos, velHorizEff )
+    -- Small inwards velocities pass due to being short, so we need to extend the length
+    local minBoundExtra = 2
+    local minBounds = ply:OBBMaxs() + Vector( minBoundExtra, minBoundExtra, 0 )
+
+    local tr = util.TraceLine( {
+        start = startPos,
+        endpos = startPos + minBoundVector( velHorizEff, minBounds[1], minBounds[2] ),
+        filter = ply,
+    } )
+
+    return not tr.Hit
+end
+
+-- Ensures the move velocity doesn't cause a player to clip into a wall
+local function verifyVel( moveData, ply, vel, timeMult )
+    if timeMult == 0 then return vel end
+
+    local startPos = moveData:GetOrigin()
+    local velVert = Vector( 0, 0, vel[3] ) -- Keep track of z-vel since this func should only modify the horizontal portion
+    local velHoriz = vel - velVert
+    local tr = util.TraceHull( {
+        start = startPos,
+        endpos = startPos + velHoriz * timeMult,
+        mins = ply:OBBMins() * TRACE_HULL_SCALE_SIDEWAYS,
+        maxs = ply:OBBMaxs() * TRACE_HULL_SCALE_SIDEWAYS,
+        filter = ply,
+    } )
+
+    if tr.Hit then
+        local norm = tr.HitNormal
+
+        -- Leave things be if vel would bring us away from the wall
+        if norm:Dot( velHoriz ) > 0 then return vel end
+
+        local traceDiff = tr.HitPos - startPos
+
+        -- If the player is *right* up against a wall, we need a second trace to know if vel faces towards or away from the wall
+        if norm == VEC_ZERO and traceDiff == VEC_ZERO then
+            local velIsGood = velLeavesCloseWall( ply, startPos, velHoriz * timeMult )
+            if velIsGood then return vel end
+        end
+
+        vel = traceDiff * VEC_REMOVE_Z + velVert
+    end
+
+    return vel
+end
+
+local function getHorizontalSpeed( moveData, isUnfurled, isUnstableControl, ignoreSprint )
+    local hSpeed = isUnstableControl and HORIZONTAL_SPEED_UNSTABLE:GetFloat() or
+                   isUnfurled        and HORIZONTAL_SPEED_UNFURLED:GetFloat() or
+                                         HORIZONTAL_SPEED:GetFloat()
+
+    if not ignoreSprint and moveData:KeyDown( IN_SPEED ) then
+        return hSpeed * SPRINT_BOOST:GetFloat()
+    end
+
+    return hSpeed
+end
+
+local function getHorizontalMoveVel( moveData )
+    local hVelAdd = Vector( 0, 0, 0 )
+    local ang = moveData:GetAngles()
+    ang = Angle( 0, ang[2], ang[3] ) -- Force angle to be horizontal
+
+    -- Forward/Backward
+    if moveData:KeyDown( IN_FORWARD ) then
+        if not moveData:KeyDown( IN_BACK ) then
+            hVelAdd = hVelAdd + ang:Forward()
+        end
+    elseif moveData:KeyDown( IN_BACK ) then
+        hVelAdd = hVelAdd - ang:Forward()
+    end
+
+    -- Right/Left
+    if moveData:KeyDown( IN_MOVERIGHT ) then
+        if not moveData:KeyDown( IN_MOVELEFT ) then
+            hVelAdd = hVelAdd + ang:Right()
+        end
+    elseif moveData:KeyDown( IN_MOVELEFT ) then
+        hVelAdd = hVelAdd - ang:Right()
+    end
+
+    return hVelAdd
+end
+
+local function addHorizontalVel( moveData, ply, vel, timeMult, isUnfurled, unstableDir )
+    -- Acquire direction based on moveData
+    local hVelAdd = getHorizontalMoveVel( moveData )
+
+    -- Apply the additional velocity
+    local hVelAddLength = hVelAdd:Length()
+
+    if hVelAddLength ~= 0 then
+        hVelAdd = improveHandling( vel, hVelAdd / hVelAddLength )
+        vel = vel + hVelAdd * timeMult * getHorizontalSpeed( moveData, isUnfurled, unstableDir, false )
+    end
+
+    if unstableDir then
+        vel = vel + unstableDir * timeMult * getHorizontalSpeed( moveData, isUnfurled, false, true )
+    end
+
+    -- Limit the horizontal speed
+    local hSpeedCur = vel:Length2D()
+    local hSpeedLimit = HORIZONTAL_SPEED_LIMIT:GetFloat()
+
+    if hSpeedCur > hSpeedLimit then
+        local mult = hSpeedLimit / hSpeedCur
+
+        vel[1] = vel[1] * mult
+        vel[2] = vel[2] * mult
+    end
+
+    vel = verifyVel( moveData, ply, vel, timeMult )
+
+    return vel
+end
+
+-- Ensures large amounts of lurch doesn't cause the player to clip through the floor
+local function verifyLurch( moveData, ply, timeMult, velZ, lurch )
+    if lurch >= 0 then return lurch end
+    if math.abs( velZ ) >= UNSTABLE_MAX_FALL_LURCH:GetFloat() then return 0 end
+
+    if timeMult == 0 then
+        timeMult = 0.03
+    end
+
+    local startHoist = 5 -- Raises the startPos for in case ply is already starting to clip into the floor
+    local traceExtend = 4 -- Extends the trace so we can check for shortly beyond where velZ and lurch will place the player
+    local startPos = moveData:GetOrigin() + Vector( 0, 0, startHoist )
+    local traceLength = math.abs( velZ * timeMult + lurch ) + traceExtend + startHoist
+
+    local tr = util.TraceHull( {
+        start = startPos,
+        endpos = startPos + Vector( 0, 0, -traceLength ),
+        mins = ply:OBBMins() * TRACE_HULL_SCALE_DOWN,
+        maxs = ply:OBBMaxs() * TRACE_HULL_SCALE_DOWN,
+        filter = ply,
+    } )
+
+    if not tr.Hit then return lurch end
+
+    local hitLength = traceLength * tr.Fraction - startHoist -- Distance from moveOrigin to hitPos
+    local extraBuffer = 2.5 / timeMult -- Try to end up slightly above the floor, for just in case
+    local lurchUpLimit = extraBuffer / 2 -- Don't yield a positive (upwards) lurch beyond this value
+    local amountToRemove = traceLength - hitLength + extraBuffer
+
+    return math.min( lurchUpLimit, lurch + amountToRemove )
+end
+
+-- Messing with the Move hook causes view punch velocity to sometimes get stuck while in a parachute.
+-- This periodically checks and clears out view punch when it gets stuck.
+local function clearStuckViewPunch( ply )
+    local now = realTime()
+    local nextCheckTime = ply.cfcParachuteNextViewPunchCheck or now
+
+    if nextCheckTime > now then return end
+
+    local punchVelOld = ply.cfcParachuteViewPunchVel
+    local punchVelNew = ply:GetViewPunchVelocity()
+
+    ply.cfcParachuteNextViewPunchCheck = now + VIEW_PUNCH_CHECK_INTERVAL
+    ply.cfcParachuteViewPunchVel = punchVelNew
+
+    if punchVelNew == ANG_ZERO or punchVelNew ~= punchVelOld then return end
+
+    ply:SetViewPunchVelocity( ANG_ZERO )
+    ply.cfcParachuteViewPunchVel = nil
 end
 
 function CFC_Parachute.SetDesignSelection( ply, oldDesign, newDesign )
@@ -294,6 +522,60 @@ hook.Add( "PlayerEnteredVehicle", "CFC_Parachute_CloseChute", function( ply )
     end )
 end )
 
+hook.Add( "Move", "CFC_Parachute_SlowFall", function( ply, moveData )
+    if ply:GetMoveType() == MOVETYPE_NOCLIP then return end
+
+    local wep = ply:GetWeapon( "cfc_weapon_parachute" )
+
+    if not isValid( wep ) then return end
+    if not wep.chuteIsOpen then return end
+
+    local isUnfurled = wep.chuteIsUnfurled
+    local isUnstable = wep.chuteIsUnstable
+    local unstableDir
+    local targetFallVel = -( isUnfurled and FALL_SPEED_UNFURLED:GetFloat() or FALL_SPEED:GetFloat() )
+    local vel = moveData:GetVelocity()
+    local velZ = vel[3]
+
+    if velZ > targetFallVel then return end
+
+    clearStuckViewPunch( ply )
+
+    local timeMult = FrameTime()
+    local lurch = wep.chuteLurch or 0
+
+    -- Ensure we maintain the locked angle for unstable parachutes
+    if isUnstable then
+        local lockedAng = wep.chuteDirAng
+
+        if not lockedAng then
+            lockedAng = moveData:GetAngles()
+            lockedAng = Angle( 0, ang[2], ang[3] ) -- Force angle to be horizontal
+
+            wep.chuteDirAng = lockedAng
+        end
+
+        unstableDir = lockedAng:Forward()
+    end
+
+    -- Modify velocity
+    vel = addHorizontalVel( moveData, ply, vel, timeMult, isUnfurled, unstableDir )
+    velZ = velZ + ( targetFallVel - velZ ) * FALL_LERP:GetFloat() * timeMult
+
+    if lurch ~= 0 then
+        lurch = verifyLurch( moveData, ply, timeMult, velZ, lurch )
+        vel[3] = velZ + lurch
+        wep.chuteLurch = 0
+    else
+        vel[3] = velZ
+    end
+
+    moveData:SetVelocity( vel )
+    moveData:SetOrigin( moveData:GetOrigin() + vel * timeMult )
+
+    return true
+end )
+
 hook.Add( "EntityFireBullets", "CFC_Parachute_UnstableShoot", function( ent, data )
     local owner = ent:GetOwner()
 
@@ -306,11 +588,6 @@ hook.Add( "EntityFireBullets", "CFC_Parachute_UnstableShoot", function( ent, dat
     local chuteSwep = owner:GetWeapon( "cfc_weapon_parachute" )
 
     if not isValid( chuteSwep ) or not chuteSwep.chuteIsUnstable then return end
-
-    if not UNSTABLE_SHOOT_LURCH_CHANCE or not UNSTABLE_SHOOT_DIRECTION_CHANGE_CHANCE then
-        UNSTABLE_SHOOT_LURCH_CHANCE = GetConVar( "cfc_parachute_destabilize_shoot_lurch_chance" )
-        UNSTABLE_SHOOT_DIRECTION_CHANGE_CHANCE = GetConVar( "cfc_parachute_destabilize_shoot_change_chance" )
-    end
 
     if math.Rand( 0, 1 ) <= UNSTABLE_SHOOT_LURCH_CHANCE:GetFloat() then
         chuteSwep:ApplyUnstableLurch()
@@ -357,6 +634,21 @@ hook.Add( "InitPostEntity", "CFC_Parachute_CheckOptionalDependencies", function(
     LFS_EXISTS = simfphys and simfphys.LFS and true
 
     CFC_Parachute.TrySetupLFS()
+end )
+
+hook.Add( "InitPostEntity", "CFC_Parachute_GetConvars", function()
+    UNSTABLE_SHOOT_LURCH_CHANCE = GetConVar( "cfc_parachute_destabilize_shoot_lurch_chance" )
+    UNSTABLE_SHOOT_DIRECTION_CHANGE_CHANCE = GetConVar( "cfc_parachute_destabilize_shoot_change_chance" )
+    UNSTABLE_MAX_FALL_LURCH = GetConVar( "cfc_parachute_destabilize_max_fall_lurch" )
+    FALL_SPEED = GetConVar( "cfc_parachute_fall_speed" )
+    FALL_SPEED_UNFURLED = GetConVar( "cfc_parachute_fall_speed_unfurled" )
+    FALL_LERP = GetConVar( "cfc_parachute_fall_lerp" )
+    HORIZONTAL_SPEED = GetConVar( "cfc_parachute_horizontal_speed" )
+    HORIZONTAL_SPEED_UNFURLED = GetConVar( "cfc_parachute_horizontal_speed_unfurled" )
+    HORIZONTAL_SPEED_UNSTABLE = GetConVar( "cfc_parachute_horizontal_speed_unstable" )
+    HORIZONTAL_SPEED_LIMIT = GetConVar( "cfc_parachute_horizontal_speed_limit" )
+    SPRINT_BOOST = GetConVar( "cfc_parachute_sprint_boost" )
+    HANDLING = GetConVar( "cfc_parachute_handling" )
 end )
 
 hook.Add( "PlayerNoClip", "CFC_Parachute_CloseExcessChutes", function( ply, state )
