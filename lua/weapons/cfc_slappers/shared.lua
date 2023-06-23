@@ -148,6 +148,7 @@ function SWEP:playRandomSound( ent, sounds, level, pitch, channel )
     end
     local soundName = sounds[math.random( #sounds )]
 
+    if not IsValid( ent ) then return end
     ent:EmitSound( soundName, level, pitch, 1, channel )
 
 end
