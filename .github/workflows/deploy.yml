@@ -22,8 +22,8 @@ jobs:
         run: |
           rm -rfv $GITHUB_WORKSPACE/project/lua
           rm -rfv $GITHUB_WORKSPACE/project/.git*
-          rm -v $GITHUB_WORKSPACE/project/LICENSE
-          rm -v $GITHUB_WORKSPACE/project/README
+          rm -fv $GITHUB_WORKSPACE/project/LICENSE
+          rm -fv $GITHUB_WORKSPACE/project/README
 
       - uses: CFC-Servers/gmod-upload@master
         with:
