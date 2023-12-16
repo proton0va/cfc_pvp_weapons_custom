@@ -1,11 +1,5 @@
 if SERVER then
     AddCSLuaFile( "shared.lua" )
-    resource.AddFile( "materials/models/weapons/v_arms.vmt" )
-    resource.AddFile( "materials/models/weapons/watch.vmt" )
-
-    for i = 1, 9 do
-        resource.AddFile( string.format( "sound/elevator/effects/slap_hit0%s.wav", i ) )
-    end
 
     CreateConVar( "slappers_slap_weapons_consecutive", 3, FCVAR_ARCHIVE, "Consecutive hits required to slap weapons" )
     CreateConVar( "slappers_slap_weapons", 1, FCVAR_ARCHIVE, "Slap weapons out of players' hands" )
