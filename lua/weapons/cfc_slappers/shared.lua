@@ -292,48 +292,9 @@ function SWEP:SlapWeaponOutOfHands( ent )
 
     ent:EmitSound( self.Sounds.LoseWeapon, self:Level( 80 ), self:Pitch( 150 ), 1, CHAN_STATIC )
 
-    -- Strip them of their weapon
-    if ent:IsPlayer() then
-        ent:StripWeapon( class )
-    elseif ent:IsNPC() then
-        weapon:Remove()
-    end
+    ent:DropWeapon( weapon )
+    weapon.SlapperCannotPickup = CurTime() + 3
 
-    -- Spawn a new physical one
-    local wep = ents.Create( class )
-    local hand = ent:LookupBone( "ValveBiped.Bip01_R_Hand" )
-
-    pos = hand and ent:GetBonePosition( hand ) or ent:GetPos()
-
-    wep:SetPos( pos )
-    wep:SetOwner( ent )
-    wep:Spawn()
-    wep.SlapperCannotPickup = CurTime() + 3
-
-    local phys = wep:GetPhysicsObject()
-    if not IsValid( phys ) then return end
-
-    timer.Simple( 0.01, function()
-        if not IsValid( self ) then return end
-        if not IsValid( phys ) then return end
-
-        local owner = self:GetOwner()
-        if not IsValid( owner ) then return end
-
-        local ang = owner:EyeAngles()
-
-        local modifier = 3000
-
-        local forward = ang:Forward() * modifier
-        local leftRight = ang:Right() * modifier * self.SlapDirectionMul
-        local alwaysUp = Vector( 0, 0, math.Rand( modifier * 0.5, modifier ) )
-
-        local force = forward + leftRight + alwaysUp
-        local forceMultiplied = force * self:ForceMul()
-
-        phys:ApplyForceCenter( forceMultiplied )
-
-    end )
 end
 
 hook.Add( "PlayerCanPickupWeapon", "SlapCanPickup", function( _, weapon )
