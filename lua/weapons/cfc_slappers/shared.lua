@@ -258,8 +258,6 @@ function SWEP:SlapWeaponOutOfHands( ent )
     local class = weapon:GetClass()
     if class == "weapon_fists" then return end
 
-    local pos = weapon:GetPos()
-
     weapon.ConsecutiveSlaps = ( weapon.ConsecutiveSlaps or 0 ) + self:WeaponKnockWeight()
 
     timer.Simple( buildupTimeout, function()
