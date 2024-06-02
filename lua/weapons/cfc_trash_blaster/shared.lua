@@ -103,6 +103,31 @@ SWEP.Primary = {
     ChargeStepPitchMinEnd = 120,
     ChargeStepPitchMaxEnd = 120,
     ChargeStepPitchEase = function( x ) return x end, -- Use an easing function (e.g. math.ease.InCubic). Default is linear, which isn't in the ease library.
+
+    ChargeSprite = {
+        Enabled = false,
+        Mat = "sprites/light_glow01", -- Material path for the sprite (should have ignorez)
+        MatVM = "cfc_pvp_weapons/sprites/charge_glow", -- Material path for the viewmodel (shouldn't have ignorez)
+        Offset = Vector( 25, 0, 0 ), -- Position offset for the sprite
+        OffsetVM = Vector( 25, -3, -3 ), -- Position offset for the viewmodel sprite
+        Color = Color( 255, 255, 255 ),
+        AlphaStart = 0,
+        AlphaEnd = 255,
+        Framerate = 10,
+        ScaleStart = 0, -- Used by the world sprite
+        ScaleEnd = 0.75, -- Used by the world sprite
+        SizeStart = 0, -- Used by the viewmodel sprite
+        SizeEnd = 20, -- Used by the viewmodel sprite
+    }
+}
+
+SWEP.CFC_FirstTimeHints = {
+    {
+        Message = "The Trash Blaster is a charged weapon. Hold left mouse before releasing to fire.",
+        Sound = "ambient/water/drip1.wav",
+        Duration = 7,
+        DelayNext = 0,
+    },
 }
 
 SWEP.ViewOffset = Vector( 0, 0, 0 ) -- Optional: Applies an offset to the viewmodel's position
@@ -187,6 +212,7 @@ function SWEP:FireWeapon( chargeAmount, notFirstCall )
     ) )
     prop:SetCollisionGroup( COLLISION_GROUP_INTERACTIVE_DEBRIS )
     prop:Spawn()
+    prop:SetOwner( owner )
 
     prop:EmitSound( self.Primary.Sound )
     prop:SetPhysicsAttacker( owner, 1000 )
