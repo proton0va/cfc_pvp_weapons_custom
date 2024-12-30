@@ -1,7 +1,7 @@
 AddCSLuaFile()
 
 SWEP.Category			= "CFC"
-SWEP.PrintName			= "Homing Javelin Launcher"
+SWEP.PrintName			= "Stinger Missile"
 SWEP.Author				= "Luna, Redox, StrawWagen"
 SWEP.Slot				= 4
 SWEP.SlotPos			= 9
@@ -46,19 +46,19 @@ function SWEP:Initialize()
 	self:SetHoldType( self.HoldType )
 end
 
-local javelinLockTime = CreateConVar( "cfc_javelin_locktime", 5, { FCVAR_ARCHIVE, FCVAR_REPLICATED } )
-local javelinLockAngle
+local stingerLockTime = CreateConVar( "cfc_stinger_locktime", 5, { FCVAR_ARCHIVE, FCVAR_REPLICATED } )
+local stingerLockAngle
 
 if SERVER then
-	javelinLockAngle = CreateConVar( "cfc_javelin_lockangle", 7, FCVAR_ARCHIVE )
+	stingerLockAngle = CreateConVar( "cfc_stinger_lockangle", 7, FCVAR_ARCHIVE )
 
-	local maxRange = CreateConVar( "cfc_javelin_maxrange", 60000, { FCVAR_ARCHIVE } ):GetInt()
-	SetGlobalInt( "cfc_javelin_maxrange", maxRange )
+	local maxRange = CreateConVar( "cfc_stinger_maxrange", 60000, { FCVAR_ARCHIVE } ):GetInt()
+	SetGlobalInt( "cfc_stinger_maxrange", maxRange )
 
-	cvars.AddChangeCallback( "cfc_javelin_maxrange", function( _, _, value )
-		SetGlobalInt( "cfc_javelin_maxrange", tonumber( value ) )
+	cvars.AddChangeCallback( "cfc_stinger_maxrange", function( _, _, value )
+		SetGlobalInt( "cfc_stinger_maxrange", tonumber( value ) )
 		maxRange = tonumber( value )
-	end, "CFC_Javelin_Range" )
+	end, "CFC_Stinger_Range" )
 
 	local function setFogRange()
 		local fogController = ents.FindByClass( "env_fog_controller" )[1]
@@ -66,10 +66,10 @@ if SERVER then
 
 		local fogRange = fogController:GetKeyValues().farz
 		if fogRange == -1 then return end
-		SetGlobalInt( "cfc_javelin_maxrange", math.min( maxRange, fogRange ) )
+		SetGlobalInt( "cfc_stinger_maxrange", math.min( maxRange, fogRange ) )
 	end
 
-	hook.Add( "InitPostEntity", "CFC_Javelin_Range", setFogRange )
+	hook.Add( "InitPostEntity", "CFC_Stinger_Range", setFogRange )
 	setFogRange() -- Autorefresh
 end
 
@@ -105,7 +105,7 @@ function SWEP:Think()
 	local curtime = CurTime()
 	local owner = self:GetOwner()
 	local findTime = self.findTime
-	local lockOnTime = javelinLockTime:GetFloat()
+	local lockOnTime = stingerLockTime:GetFloat()
 
 	if findTime + lockOnTime < curtime and IsValid( self:GetClosestEnt() ) then
 		self.Locked = true
@@ -117,7 +117,7 @@ function SWEP:Think()
 		self:SetIsLocked( self.Locked )
 
 		if self.Locked then
-			self.LockSND = CreateSound( owner, "weapons/cfc_javelin/radar_lock.wav" )
+			self.LockSND = CreateSound( owner, "weapons/cfc_stinger/radar_lock.wav" )
 			self.LockSND:PlayEx( 0.5, 100 )
 
 			if self.TrackSND then
@@ -151,8 +151,8 @@ function SWEP:Think()
 		local AimForward = owner:GetAimVector()
 		local startpos = owner:GetShootPos()
 
-		local maxDist = GetGlobalInt( "cfc_javelin_maxrange" )
-		local lockOnAng = javelinLockAngle:GetInt()
+		local maxDist = GetGlobalInt( "cfc_stinger_maxrange" )
+		local lockOnAng = stingerLockAngle:GetInt()
 
 		local vehicles = {}
 		local closestEnt = NULL
@@ -162,7 +162,7 @@ function SWEP:Think()
 		for index, vehicle in ipairs( self.foundVehicles ) do
 			if not IsValid( vehicle ) then table.remove( self.foundVehicles, index ) continue end
 
-			local hookResult = hook.Run( "CFC_Javelin_BlockLockon", self, vehicle )
+			local hookResult = hook.Run( "CFC_Stinger_BlockLockon", self, vehicle )
 			if hookResult == true then table.remove( self.foundVehicles, index ) continue end
 
 			local sub = ( vehicle:GetPos() - startpos )
@@ -201,7 +201,7 @@ function SWEP:Think()
 			if IsValid( closestEnt ) then
 				self.findTime = curtime
 				self:SetLockedOnTime( curtime + lockOnTime )
-				self.TrackSND = CreateSound( owner, "weapons/cfc_javelin/radar_track.wav" )
+				self.TrackSND = CreateSound( owner, "weapons/cfc_stinger/radar_track.wav" )
 				self.TrackSND:PlayEx( 0, 100 )
 				self.TrackSND:ChangeVolume( 0.5, 2 )
 			elseif self.TrackSND then
@@ -264,7 +264,7 @@ function SWEP:PrimaryAttack()
 	if CLIENT then return end
 
 	local startpos = owner:GetShootPos() + owner:EyeAngles():Right() * 10
-	local ent = ents.Create( "cfc_javelin_missile" )
+	local ent = ents.Create( "cfc_stinger_missile" )
 	ent:SetPos( startpos )
 	ent:SetAngles( ( owner:GetEyeTrace().HitPos - startpos ):Angle() )
 	ent:SetOwner( owner )
@@ -400,7 +400,7 @@ function SWEP:DrawHUD()
 
 	else
 		local untilLocked = self:GetLockedOnTime() - CurTime()
-		local normalized = untilLocked / javelinLockTime:GetFloat()
+		local normalized = untilLocked / stingerLockTime:GetFloat()
 		size = math.Clamp( lockedSize + ( normalized * difference ), lockedSize, notLockedSize )
 
 	end

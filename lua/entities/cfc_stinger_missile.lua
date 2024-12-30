@@ -14,9 +14,9 @@ end
 
 if SERVER then
 
-	local javelinDmgMulCvar = CreateConVar( "cfc_javelin_damagemul", 1, FCVAR_ARCHIVE )
-	local javelinMobilityMul = CreateConVar( "cfc_javelin_mobilitymul", 1, FCVAR_ARCHIVE )
-	local javelinDirectHitPlayerMul = CreateConVar( "cfc_javelin_directhitplayersmul", 1, FCVAR_ARCHIVE )
+	local stingerDmgMulCvar = CreateConVar( "cfc_stinger_damagemul", 1, FCVAR_ARCHIVE )
+	local stingerMobilityMul = CreateConVar( "cfc_stinger_mobilitymul", 1, FCVAR_ARCHIVE )
+	local stingerDirectHitPlayerMul = CreateConVar( "cfc_stinger_directhitplayersmul", 1, FCVAR_ARCHIVE )
 
 	local maxBlindfireSpeed = 3000
 
@@ -27,7 +27,7 @@ if SERVER then
 	end
 
 	sound.Add( {
-		name = "cfc_javelin__impactflesh",
+		name = "cfc_stinger__impactflesh",
 		channel = CHAN_STATIC,
 		volume = 1.0,
 		level = 130,
@@ -63,7 +63,7 @@ if SERVER then
 			-- ramp up to full speed over a bit less than 1 second
 			local timeAlive = math.abs( self:GetCreationTime() - CurTime() )
 			local speed = math.Clamp( timeAlive * maxBlindfireSpeed, 0, maxBlindfireSpeed )
-			local vel = ( speed * javelinMobilityMul:GetFloat() )
+			local vel = ( speed * stingerMobilityMul:GetFloat() )
 
 			pObj:SetVelocityInstantaneous( self:GetForward() * vel )
 			pObj:SetAngleVelocity( pObj:GetAngleVelocity() * 0.995 ) -- slowly spiral out of a turn
@@ -74,8 +74,8 @@ if SERVER then
 		-- increase turnrate the longer missile is alive, bear down on far targets.
 		-- goal is to punish pilots/drivers who camp far away from players.
 		local timeAlive = math.abs( self:GetCreationTime() - CurTime() )
-		local turnrateAdd = math.Clamp( timeAlive * 75, 0, 350 ) * javelinMobilityMul:GetFloat()
-		local speedAdd = math.Clamp( timeAlive * 700, 0, 10000 ) * javelinMobilityMul:GetFloat()
+		local turnrateAdd = math.Clamp( timeAlive * 75, 0, 350 ) * stingerMobilityMul:GetFloat()
+		local speedAdd = math.Clamp( timeAlive * 700, 0, 10000 ) * stingerMobilityMul:GetFloat()
 
 		local speed = self:GetDirtyMissile() and 1000 or 1500
 		speed = speed + speedAdd
@@ -125,7 +125,7 @@ if SERVER then
 			local AF = self:WorldToLocalAngles( targetdir:Angle() )
 			local badAngles = AF.p > 95 or AF.y > 95
 
-			-- if you want to make a plane/vehicle not get targeted by LFS missilelauncher then see CFC_Javelin_BlockLockon hook, in the launcher
+			-- if you want to make a plane/vehicle not get targeted by LFS missilelauncher then see CFC_Stinger_BlockLockon hook, in the launcher
 			if distToTargSqr < 500^2 and self:DoHitTrace( myPos ) then -- close to target, start doing traces in front of us
 				return
 			-- target is cheating! they're no collided!
@@ -235,11 +235,11 @@ if SERVER then
 			dmgAmount = 1500
 		elseif hitEnt:IsNPC() or hitEnt:IsNextBot() then
 			dmgAmount = 200
-			dmgSound = "cfc_javelin__impactflesh"
+			dmgSound = "cfc_stinger__impactflesh"
 		elseif hitEnt:IsPlayer() then
 			-- this ends up getting added with the blastdamage, doesn't need to be too strong
-			dmgAmount = 75 * javelinDirectHitPlayerMul:GetFloat()
-			dmgSound = "cfc_javelin__impactflesh"
+			dmgAmount = 75 * stingerDirectHitPlayerMul:GetFloat()
+			dmgSound = "cfc_stinger__impactflesh"
 		end
 
 		return dmgAmount, dmgSound
@@ -261,7 +261,7 @@ if SERVER then
 			local dmgAmount, dmgSound = self:GetDirectHitDamage( hitEnt )
 
 			local dmginfo = DamageInfo()
-				dmginfo:SetDamage( dmgAmount * javelinDmgMulCvar:GetFloat() )
+				dmginfo:SetDamage( dmgAmount * stingerDmgMulCvar:GetFloat() )
 				dmginfo:SetAttacker( IsValid( self:GetAttacker() ) and self:GetAttacker() or self )
 				dmginfo:SetDamageType( DMG_DIRECT )
 				dmginfo:SetInflictor( self )
@@ -290,7 +290,7 @@ if SERVER then
 	end
 
 	function ENT:Detonate()
-		local dmgMul = javelinDmgMulCvar:GetFloat()
+		local dmgMul = stingerDmgMulCvar:GetFloat()
 
 		local Inflictor = self:GetInflictor()
 		local Attacker = self:GetAttacker()
@@ -348,7 +348,7 @@ else -- client
 		local effectdata = EffectData()
 			effectdata:SetOrigin( self:GetPos() )
 			effectdata:SetEntity( self )
-		util.Effect( "cfc_javelin_trail", effectdata, true, true )
+		util.Effect( "cfc_stinger_trail", effectdata, true, true )
 	end
 
 	function ENT:Draw()
