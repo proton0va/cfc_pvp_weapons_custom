@@ -31,6 +31,21 @@ SWEP.Secondary.Ammo          = "none"
 SWEP.ReloadSpeedMul = 0.45
 SWEP.UnmodReloadTime = 1.8 -- rough estimate of unmodified reload time
 
+SWEP.CFC_FirstTimeHints = {
+    {
+        Message = "This is a homing, anti-air RPG",
+        Sound = "ambient/water/drip1.wav",
+        Duration = 8,
+        DelayNext = 7,
+    },
+    {
+        Message = "Aim at a vehicle, and FIRE when the reticle turns red!",
+        Sound = "ambient/water/drip2.wav",
+        Duration = 15,
+        DelayNext = 0,
+    },
+}
+
 function SWEP:SetupDataTables()
     self:NetworkVar( "Entity", 0, "ClosestEnt" )
     self:NetworkVar( "Bool", 0, "IsLocked" )
