@@ -313,6 +313,9 @@ if SERVER then
             effectdata:SetOrigin( self:GetPos() )
         util.Effect( "Explosion", effectdata )
 
+        self:EmitSound( "vehicles/airboat/pontoon_impact_hard1.wav", 100, 50, 0.5 )
+        self:EmitSound( "Explo.ww2bomb" )
+
         self:Remove()
 
         timer.Simple( 0, function()

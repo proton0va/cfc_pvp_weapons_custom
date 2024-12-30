@@ -28,7 +28,7 @@ SWEP.Secondary.DefaultClip   = -1
 SWEP.Secondary.Automatic     = false
 SWEP.Secondary.Ammo          = "none"
 
-SWEP.ReloadSpeedMul = 0.5
+SWEP.ReloadSpeedMul = 0.45
 SWEP.UnmodReloadTime = 1.8 -- rough estimate of unmodified reload time
 
 function SWEP:SetupDataTables()
