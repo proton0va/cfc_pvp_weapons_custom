@@ -87,7 +87,7 @@ if SERVER then
         -- goal is to punish pilots/drivers who camp far away from players.
         local timeAlive = math.abs( self:GetCreationTime() - CurTime() )
         local turnrateAdd = math.Clamp( timeAlive * 75, 0, 350 ) * stingerMobilityMul:GetFloat()
-        local speedAdd = math.Clamp( timeAlive * 700, 0, 10000 ) * stingerMobilityMul:GetFloat()
+        local speedAdd = math.Clamp( timeAlive * 600, 0, 10000 ) * stingerMobilityMul:GetFloat()
 
         local speed = self:GetDirtyMissile() and 1000 or 1500
         speed = speed + speedAdd
