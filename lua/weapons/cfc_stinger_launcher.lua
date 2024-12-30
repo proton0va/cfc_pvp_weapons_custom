@@ -46,7 +46,7 @@ function SWEP:Initialize()
     self:SetHoldType( self.HoldType )
 end
 
-local stingerLockTime = CreateConVar( "cfc_stinger_locktime", 5, { FCVAR_ARCHIVE, FCVAR_REPLICATED } )
+local stingerLockTime = CreateConVar( "cfc_stinger_locktime", 4, { FCVAR_ARCHIVE, FCVAR_REPLICATED } )
 local stingerLockAngle
 
 if SERVER then
@@ -278,6 +278,9 @@ function SWEP:PrimaryAttack()
     ent:EmitSound( "weapons/stinger_fire1.wav", 100, math.random( 80, 90 ), 1, CHAN_WEAPON )
     owner:EmitSound( "Weapon_RPG.NPC_Single" )
 
+    util.ScreenShake( owner:GetShootPos(), 20, 20, 0.15, 800 )
+    util.ScreenShake( owner:GetShootPos(), 1, 20, 3, 1500 )
+
     local lockOnTarget = self:GetClosestEnt()
 
     if IsValid( lockOnTarget ) and self:GetIsLocked() then
@@ -311,7 +314,6 @@ end
 
 function SWEP:Reload()
     if self:Clip1() > 0 or self:GetOwner():GetAmmoCount( self.Primary.Ammo ) <= 0 then return end
-    if self:GetNextPrimaryFire() > CurTime() then return end
     self:UnLock()
     self:DefaultReload( ACT_VM_RELOAD )
 

@@ -18,6 +18,7 @@ if SERVER then
     local stingerMobilityMul = CreateConVar( "cfc_stinger_mobilitymul", 1, FCVAR_ARCHIVE )
     local stingerDirectHitPlayerMul = CreateConVar( "cfc_stinger_directhitplayersmul", 1, FCVAR_ARCHIVE )
 
+    local blindfireMaxSpeedTime = 1.5
     local maxBlindfireSpeed = 3000
 
     local GetClosestFlare
@@ -27,7 +28,7 @@ if SERVER then
     end
 
     sound.Add( {
-        name = "cfc_stinger__impactflesh",
+        name = "cfc_stinger_impactflesh",
         channel = CHAN_STATIC,
         volume = 1.0,
         level = 130,
@@ -62,11 +63,22 @@ if SERVER then
         if IsValid( pObj ) then
             -- ramp up to full speed over a bit less than 1 second
             local timeAlive = math.abs( self:GetCreationTime() - CurTime() )
-            local speed = math.Clamp( timeAlive * maxBlindfireSpeed, 0, maxBlindfireSpeed )
+            local tillFullSpeed = timeAlive / blindfireMaxSpeedTime
+            local speed = math.Clamp( tillFullSpeed * maxBlindfireSpeed, 0, maxBlindfireSpeed )
             local vel = ( speed * stingerMobilityMul:GetFloat() )
-
             pObj:SetVelocityInstantaneous( self:GetForward() * vel )
-            pObj:SetAngleVelocity( pObj:GetAngleVelocity() * 0.995 ) -- slowly spiral out of a turn
+
+            local angVel = pObj:GetAngleVelocity() * 0.995 -- bias towards going straight, spiral out of turns
+
+            local instability
+            if tillFullSpeed >= 1 then -- drift a LOT once we get to max speed
+                instability = 0.15
+            else
+                instability = 0.08
+            end
+            angVel = angVel + VectorRand() * instability -- but dont go perfectly straight
+
+            pObj:SetAngleVelocity( angVel )
         end
     end
 
@@ -228,18 +240,18 @@ if SERVER then
         local hookResultDmg, hookResultSound = hook.Run( "LFS.MissileDirectHitDamage", self, hitEnt )
         if hookResultDmg ~= nil and isnumber( hookResultDmg ) then return hookResultDmg, hookResultSound end
 
-        local dmgAmount = 1000
+        local dmgAmount = 800
         local dmgSound = "Missile.ShotDown"
 
         if hitEnt.IsSimfphyscar then
-            dmgAmount = 1500
+            dmgAmount = 1250
         elseif hitEnt:IsNPC() or hitEnt:IsNextBot() then
             dmgAmount = 200
-            dmgSound = "cfc_stinger__impactflesh"
+            dmgSound = "cfc_stinger_impactflesh"
         elseif hitEnt:IsPlayer() then
             -- this ends up getting added with the blastdamage, doesn't need to be too strong
             dmgAmount = 75 * stingerDirectHitPlayerMul:GetFloat()
-            dmgSound = "cfc_stinger__impactflesh"
+            dmgSound = "cfc_stinger_impactflesh"
         end
 
         return dmgAmount, dmgSound
