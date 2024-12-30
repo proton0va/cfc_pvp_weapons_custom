@@ -86,7 +86,7 @@ if SERVER then
         -- increase turnrate the longer missile is alive, bear down on far targets.
         -- goal is to punish pilots/drivers who camp far away from players.
         local timeAlive = math.abs( self:GetCreationTime() - CurTime() )
-        local turnrateAdd = math.Clamp( timeAlive * 70, 0, 350 ) * stingerMobilityMul:GetFloat()
+        local turnrateAdd = math.Clamp( timeAlive * 80, 0, 350 ) * stingerMobilityMul:GetFloat()
         local speedAdd = math.Clamp( timeAlive * 600, 0, 10000 ) * stingerMobilityMul:GetFloat()
 
         local speed = self:GetDirtyMissile() and 1000 or 1500
