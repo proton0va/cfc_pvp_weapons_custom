@@ -77,6 +77,18 @@ function SWEP:GetPotentialTargets()
     local foundVehicles = {}
     local addedAlready = {}
 
+    for _, vehicle in ipairs( ents.FindByClass( "npc_helicopter" ) ) do
+        table.insert( foundVehicles, vehicle )
+    end
+
+    for _, vehicle in ipairs( ents.FindByClass( "npc_combinegunship" ) ) do
+        table.insert( foundVehicles, vehicle )
+    end
+
+    for _, vehicle in ipairs( ents.FindByClass( "npc_combinedropship" ) ) do
+        table.insert( foundVehicles, vehicle )
+    end
+
     for _, vehicle in ipairs( ents.FindByClass( "prop_vehicle_*" ) ) do
         local vechiclesDriver = vehicle:GetDriver()
         if IsValid( vechiclesDriver ) then
@@ -85,10 +97,8 @@ function SWEP:GetPotentialTargets()
                 table.insert( foundVehicles, parent )
                 addedAlready[ parent ] = true
                 addedAlready[ vehicle ] = true
-
             else
                 table.insert( foundVehicles, vehicle )
-
             end
         end
     end
