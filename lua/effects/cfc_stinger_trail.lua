@@ -36,7 +36,7 @@ function EFFECT:doFX( pos )
         local emitter = self.Emitter
 
         if self.Entity:GetDirtyMissile() then
-			local randomMat = self.Materials[math.random( 1, table.Count( self.Materials ) )]
+            local randomMat = self.Materials[math.random( 1, table.Count( self.Materials ) )]
             local particle = emitter:Add( randomMat, pos )
             if particle then
                 particle:SetGravity( Vector( 0, 0, 100 ) + VectorRand() * 50 )
@@ -120,7 +120,7 @@ function EFFECT:doFXbroken( pos )
     if self.Emitter then
         local emitter = self.Emitter
 
-		local randomMat = self.Materials[math.random( 1, table.Count( self.Materials ) )]
+        local randomMat = self.Materials[math.random( 1, table.Count( self.Materials ) )]
         local particle = emitter:Add( randomMat, pos )
         if particle then
             particle:SetGravity( Vector( 0, 0, 100 ) + VectorRand() * 50 )
