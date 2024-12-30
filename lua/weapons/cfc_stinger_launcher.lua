@@ -108,10 +108,10 @@ function SWEP:GetPotentialTargets()
         local vechiclesDriver = vehicle:GetDriver()
         if IsValid( vechiclesDriver ) then
             local parent = vehicle:GetParent()
-            if parent:IsVehicle() and parent:GetDriver() == vehiclesDriver and not addedAlready[ parent ] then -- glide/simfphys
+            if parent:IsVehicle() and parent:GetDriver() == vehiclesDriver and not addedAlready[parent] then -- glide/simfphys
                 table.insert( foundVehicles, parent )
-                addedAlready[ parent ] = true
-                addedAlready[ vehicle ] = true
+                addedAlready[parent] = true
+                addedAlready[vehicle] = true
             else
                 table.insert( foundVehicles, vehicle )
             end

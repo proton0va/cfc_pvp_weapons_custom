@@ -3,13 +3,13 @@ AddCSLuaFile()
 ENT.Type = "anim"
 
 function ENT:SetupDataTables()
-    self:NetworkVar( "Bool",0, "Disabled" )
-    self:NetworkVar( "Bool",1, "CleanMissile" )
-    self:NetworkVar( "Bool",2, "DirtyMissile" )
-    self:NetworkVar( "Bool",3, "HasTarget" ) -- glide lockon handler
-    self:NetworkVar( "Entity",0, "Attacker" )
-    self:NetworkVar( "Entity",1, "Inflictor" )
-    self:NetworkVar( "Entity",2, "LockOn" )
+    self:NetworkVar( "Bool", 0, "Disabled" )
+    self:NetworkVar( "Bool", 1, "CleanMissile" )
+    self:NetworkVar( "Bool", 2, "DirtyMissile" )
+    self:NetworkVar( "Bool", 3, "HasTarget" ) -- glide lockon handler
+    self:NetworkVar( "Entity", 0, "Attacker" )
+    self:NetworkVar( "Entity", 1, "Inflictor" )
+    self:NetworkVar( "Entity", 2, "LockOn" )
 end
 
 if SERVER then
@@ -150,9 +150,9 @@ if SERVER then
                 return
             end
 
-            AF.p = math.Clamp( AF.p * 400,-turnrate,turnrate )
-            AF.y = math.Clamp( AF.y * 400,-turnrate,turnrate )
-            AF.r = math.Clamp( AF.r * 400,-turnrate,turnrate )
+            AF.p = math.Clamp( AF.p * 400, -turnrate, turnrate )
+            AF.y = math.Clamp( AF.y * 400, -turnrate, turnrate )
+            AF.r = math.Clamp( AF.r * 400, -turnrate, turnrate )
 
             local AVel = pObj:GetAngleVelocity()
             if not IsValid( pObj ) then return end
