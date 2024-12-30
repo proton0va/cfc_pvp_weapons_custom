@@ -157,7 +157,7 @@ if SERVER then
 
             local AVel = pObj:GetAngleVelocity()
             if not IsValid( pObj ) then return end
-            pObj:AddAngleVelocity( Vector( AF.r,AF.p,AF.y ) - AVel )
+            pObj:AddAngleVelocity( Vector( AF.r, AF.p, AF.y ) - AVel )
 
             pObj:SetVelocityInstantaneous( self:GetForward() * speed )
         end
