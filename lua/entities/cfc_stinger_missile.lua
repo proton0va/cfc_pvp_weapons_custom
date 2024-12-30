@@ -137,7 +137,8 @@ if SERVER then
             local AF = self:WorldToLocalAngles( targetdir:Angle() )
             local badAngles = AF.p > 95 or AF.y > 95
 
-            -- if you want to make a plane/vehicle not get targeted by LFS missilelauncher then see CFC_Stinger_BlockLockon hook, in the launcher
+            -- if you want to make a plane/vehicle not get targeted by the launcher then see CFC_Stinger_BlockLockon hook, in the launcher
+
             if distToTargSqr < 500^2 and self:DoHitTrace( myPos ) then -- close to target, start doing traces in front of us
                 return
             -- target is cheating! they're no collided!
