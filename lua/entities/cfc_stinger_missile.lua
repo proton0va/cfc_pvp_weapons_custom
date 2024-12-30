@@ -105,7 +105,7 @@ if SERVER then
         local followsPhysObj = followEnt:GetPhysicsObject()
 
         if GetClosestFlare then -- glide flares do something
-            local flare = GetClosestFlare( myPos, self:GetForward(), 600 ) -- glide homing missile is 1500 dist
+            local flare = GetClosestFlare( myPos, self:GetForward(), 700 ) -- glide homing missile is 1500 dist
             if IsValid( flare ) then
                 targetPos = flare:WorldSpaceCenter()
 
