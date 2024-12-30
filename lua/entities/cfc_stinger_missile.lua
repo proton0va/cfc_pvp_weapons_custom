@@ -271,13 +271,15 @@ if SERVER then
             util.Effect( "manhacksparks", effectdata, true, true )
 
             local dmgAmount, dmgSound = self:GetDirectHitDamage( hitEnt )
+            dmgAmount = dmgAmount * stingerDmgMulCvar:GetFloat()
 
             local dmginfo = DamageInfo()
-                dmginfo:SetDamage( dmgAmount * stingerDmgMulCvar:GetFloat() )
+                dmginfo:SetDamage( dmgAmount )
                 dmginfo:SetAttacker( IsValid( self:GetAttacker() ) and self:GetAttacker() or self )
                 dmginfo:SetDamageType( DMG_DIRECT )
                 dmginfo:SetInflictor( self )
                 dmginfo:SetDamagePosition( Pos )
+                dmginfo:SetDamageForce( self:GetForward() * dmgAmount * 500 )
             hitEnt:TakeDamageInfo( dmginfo )
 
             sound.Play( dmgSound, Pos, 140 )
