@@ -87,7 +87,7 @@ if SERVER then
         -- goal is to punish pilots/drivers who camp far away from players.
         local timeAlive = math.abs( self:GetCreationTime() - CurTime() )
         local turnrateAdd = math.Clamp( timeAlive * 75, 0, 400 ) * stingerMobilityMul:GetFloat()
-        local speedAdd = math.Clamp( timeAlive * 600, 0, 10000 ) * stingerMobilityMul:GetFloat()
+        local speedAdd = math.Clamp( timeAlive * 650, 0, 10000 ) * stingerMobilityMul:GetFloat()
 
         local speed = self:GetDirtyMissile() and 1000 or 1500
         speed = speed + speedAdd
@@ -248,7 +248,7 @@ if SERVER then
         elseif hitEnt:IsNPC() or hitEnt:IsNextBot() then
             dmgAmount = 200
             local obj = hitEnt:GetPhysicsObject()
-            if obj and obj:GetMaterial() and not string.find( obj:GetMaterial(), "metal" ) then
+            if IsValid( obj ) and obj:GetMaterial() and not string.find( obj:GetMaterial(), "metal" ) then
                 dmgSound = "cfc_stinger_impactflesh"
 
             end
