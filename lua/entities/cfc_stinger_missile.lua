@@ -247,7 +247,11 @@ if SERVER then
             dmgAmount = 1250
         elseif hitEnt:IsNPC() or hitEnt:IsNextBot() then
             dmgAmount = 200
-            dmgSound = "cfc_stinger_impactflesh"
+            local obj = hitEnt:GetPhysicsObject()
+            if obj and obj:GetMaterial() and not string.find( obj:GetMaterial(), "metal" ) then
+                dmgSound = "cfc_stinger_impactflesh"
+
+            end
         elseif hitEnt:IsPlayer() then
             -- this ends up getting added with the blastdamage, doesn't need to be too strong
             dmgAmount = 75 * stingerDirectHitPlayerMul:GetFloat()
