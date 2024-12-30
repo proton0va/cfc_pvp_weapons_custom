@@ -1,4 +1,4 @@
-EFFECT.Offset = Vector(-8,0,0)
+EFFECT.Offset = Vector( -8, 0, 0 )
 EFFECT.mat = Material( "sprites/light_glow02_add" )
 EFFECT.Materials = {
     "particle/smokesprites_0001",
@@ -36,74 +36,75 @@ function EFFECT:doFX( pos )
         local emitter = self.Emitter
 
         if self.Entity:GetDirtyMissile() then
-            local particle = emitter:Add( self.Materials[math.random(1, table.Count(self.Materials) )], pos )
+			local randomMat = self.Materials[math.random( 1, table.Count( self.Materials ) )]
+            local particle = emitter:Add( randomMat, pos )
             if particle then
-                particle:SetGravity( Vector(0,0,100) + VectorRand() * 50 )
+                particle:SetGravity( Vector( 0, 0, 100 ) + VectorRand() * 50 )
                 particle:SetVelocity( -self.Entity:GetForward() * 500  )
                 particle:SetAirResistance( 600 )
-                particle:SetDieTime( math.Rand(3,5) )
+                particle:SetDieTime( math.Rand( 3, 5 ) )
                 particle:SetStartAlpha( 100 )
-                particle:SetStartSize( math.Rand(10,13) )
-                particle:SetEndSize( math.Rand(25,60) )
+                particle:SetStartSize( math.Rand( 10, 13 ) )
+                particle:SetEndSize( math.Rand( 25, 60 ) )
                 particle:SetRoll( math.Rand( -1, 1 ) )
-                particle:SetColor( 50,50,50 )
+                particle:SetColor( 50, 50, 50 )
                 particle:SetCollide( false )
             end
 
-            local particle = emitter:Add( "particles/flamelet"..math.random(1,5), pos )
+            particle = emitter:Add( "particles/flamelet" .. math.random( 1, 5 ), pos )
             if particle then
-                particle:SetVelocity( -self.Entity:GetForward() * math.Rand(500,1600) + self.Entity:GetVelocity())
-                particle:SetDieTime( math.Rand(0.2,0.4) )
+                particle:SetVelocity( -self.Entity:GetForward() * math.Rand( 500, 1600 ) + self.Entity:GetVelocity() )
+                particle:SetDieTime( math.Rand( 0.2, 0.4 ) )
                 particle:SetAirResistance( 0 )
                 particle:SetStartAlpha( 255 )
-                particle:SetStartSize( math.Rand(20,30) )
+                particle:SetStartSize( math.Rand( 20, 30 ) )
                 particle:SetEndSize( 10 )
-                particle:SetRoll( math.Rand(-1,1) )
-                particle:SetColor( 150,50,100 )
+                particle:SetRoll( math.Rand( -1, 1 ) )
+                particle:SetColor( 150, 50, 100 )
                 particle:SetGravity( Vector( 0, 0, 0 ) )
                 particle:SetCollide( false )
             end
 
-            local particle = emitter:Add( "particles/flamelet"..math.random(1,5), self.Entity:GetPos() )
+            particle = emitter:Add( "particles/flamelet" .. math.random( 1, 5 ), self.Entity:GetPos() )
             if particle then
                 particle:SetVelocity( -self.Entity:GetForward() * 500 + VectorRand() * 50 )
                 particle:SetDieTime( 0.25 )
                 particle:SetAirResistance( 600 )
                 particle:SetStartAlpha( 255 )
-                particle:SetStartSize( math.Rand(13,20) )
-                particle:SetEndSize( math.Rand(5,7) )
-                particle:SetRoll( math.Rand(-1,1) )
-                particle:SetColor( 255,100,200 )
+                particle:SetStartSize( math.Rand( 13, 20 ) )
+                particle:SetEndSize( math.Rand( 5,7 ) )
+                particle:SetRoll( math.Rand( -1, 1 ) )
+                particle:SetColor( 255, 100, 200 )
                 particle:SetGravity( Vector( 0, 0, 0 ) )
                 particle:SetCollide( false )
             end
         else
             if not self.Entity:GetCleanMissile() then
-                local particle = emitter:Add( self.Materials[math.random(1, table.Count(self.Materials) )], pos )
+                local particle = emitter:Add( self.Materials[math.random( 1, table.Count( self.Materials ) )], pos )
 
                 if particle then
-                    particle:SetGravity( Vector(0,0,100) + VectorRand() * 50 )
+                    particle:SetGravity( Vector( 0, 0, 100 ) + VectorRand() * 50 )
                     particle:SetVelocity( -self.Entity:GetForward() * 500  )
                     particle:SetAirResistance( 600 )
-                    particle:SetDieTime( math.Rand(3,5) )
+                    particle:SetDieTime( math.Rand( 3, 5 ) )
                     particle:SetStartAlpha( 150 )
-                    particle:SetStartSize( math.Rand(6,12) )
-                    particle:SetEndSize( math.Rand(40,90) )
+                    particle:SetStartSize( math.Rand( 6, 12 ) )
+                    particle:SetEndSize( math.Rand( 40, 90 ) )
                     particle:SetRoll( math.Rand( -1, 1 ) )
-                    particle:SetColor( 50,50,50 )
+                    particle:SetColor( 50, 50, 50 )
                     particle:SetCollide( false )
                 end
 
-                local particle = emitter:Add( "particles/flamelet"..math.random(1,5), pos )
+                particle = emitter:Add( "particles/flamelet" .. math.random( 1, 5 ), pos )
                 if particle then
-                    particle:SetVelocity( -self.Entity:GetForward() * 300 + self.Entity:GetVelocity())
+                    particle:SetVelocity( -self.Entity:GetForward() * 300 + self.Entity:GetVelocity() )
                     particle:SetDieTime( 0.1 )
                     particle:SetAirResistance( 0 )
                     particle:SetStartAlpha( 255 )
                     particle:SetStartSize( 4 )
                     particle:SetEndSize( 0 )
-                    particle:SetRoll( math.Rand(-1,1) )
-                    particle:SetColor( 255,255,255 )
+                    particle:SetRoll( math.Rand( -1, 1 ) )
+                    particle:SetColor( 255, 255, 255 )
                     particle:SetGravity( Vector( 0, 0, 0 ) )
                     particle:SetCollide( false )
                 end
@@ -119,30 +120,31 @@ function EFFECT:doFXbroken( pos )
     if self.Emitter then
         local emitter = self.Emitter
 
-        local particle = emitter:Add( self.Materials[math.random(1, table.Count(self.Materials) )], pos )
+		local randomMat = self.Materials[math.random( 1, table.Count( self.Materials ) )]
+        local particle = emitter:Add( randomMat, pos )
         if particle then
-            particle:SetGravity( Vector(0,0,100) + VectorRand() * 50 )
+            particle:SetGravity( Vector( 0, 0, 100 ) + VectorRand() * 50 )
             particle:SetVelocity( -self.Entity:GetForward() * 500  )
             particle:SetAirResistance( 600 )
-            particle:SetDieTime( math.Rand(3,5) )
+            particle:SetDieTime( math.Rand( 3, 5 ) )
             particle:SetStartAlpha( 150 )
-            particle:SetStartSize( math.Rand(6,12) )
-            particle:SetEndSize( math.Rand(40,90) )
+            particle:SetStartSize( math.Rand( 6, 12 ) )
+            particle:SetEndSize( math.Rand( 40, 90 ) )
             particle:SetRoll( math.Rand( -1, 1 ) )
-            particle:SetColor( 50,50,50 )
+            particle:SetColor( 50, 50, 50 )
             particle:SetCollide( false )
         end
 
-        local particle = emitter:Add( "particles/flamelet"..math.random(1,5), pos )
+        particle = emitter:Add( "particles/flamelet" .. math.random( 1, 5 ), pos )
         if particle then
             particle:SetVelocity( -self.Entity:GetForward() * 500 + VectorRand() * 50 )
             particle:SetDieTime( 0.25 )
             particle:SetAirResistance( 600 )
             particle:SetStartAlpha( 255 )
-            particle:SetStartSize( math.Rand(25,40) )
-            particle:SetEndSize( math.Rand(10,15) )
-            particle:SetRoll( math.Rand(-1,1) )
-            particle:SetColor( 255,255,255 )
+            particle:SetStartSize( math.Rand( 25, 40 ) )
+            particle:SetEndSize( math.Rand( 10, 15 ) )
+            particle:SetRoll( math.Rand( -1, 1 ) )
+            particle:SetColor( 255, 255, 255 )
             particle:SetGravity( Vector( 0, 0, 0 ) )
             particle:SetCollide( false )
         end
@@ -162,7 +164,7 @@ function EFFECT:Think()
             local newpos = self.Entity:LocalToWorld( self.Offset )
             self:SetPos( newpos )
 
-            local Sub = (newpos - oldpos)
+            local Sub = ( newpos - oldpos )
             local Dir = Sub:GetNormalized()
             local Len = Sub:Length()
 
@@ -206,8 +208,8 @@ function EFFECT:Render()
         g = 127
         b = 255
 
-        for i =0,10 do
-            local Size = (10 - i) * 25.6
+        for i = 0, 10 do
+            local Size = ( 10 - i ) * 25.6
             render.DrawSprite( pos - ent:GetForward() * i * 5, Size, Size, Color( r, g, b, 255 ) )
         end
 
