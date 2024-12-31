@@ -3,6 +3,7 @@ AddCSLuaFile()
 SWEP.Category           = "CFC"
 SWEP.PrintName          = "Stinger Missile"
 SWEP.Author             = "Luna, Redox, StrawWagen"
+SWEP.Instructions       = "Homing, anti-air RPG.\nFor best results, use on distant targets."
 SWEP.Slot               = 4
 SWEP.SlotPos            = 9
 
@@ -31,6 +32,11 @@ SWEP.Secondary.Ammo          = "none"
 SWEP.ReloadSpeedMul = 0.45
 SWEP.UnmodReloadTime = 1.8 -- rough estimate of unmodified reload time
 
+if CLIENT then
+    SWEP.BounceWeaponIcon = false
+    SWEP.WepSelectIcon = surface.GetTextureID( "vgui/hud/cfc_stinger_launcher_wepselecticon" )
+end
+
 SWEP.CFC_FirstTimeHints = {
     {
         Message = "This is a homing, anti-air RPG",
@@ -50,11 +56,6 @@ function SWEP:SetupDataTables()
     self:NetworkVar( "Entity", 0, "ClosestEnt" )
     self:NetworkVar( "Bool", 0, "IsLocked" )
     self:NetworkVar( "Float", 0, "LockedOnTime" )
-end
-
-local wepIconColor = Color( 255, 210, 0, 255 )
-function SWEP:DrawWeaponSelection( x, y, wide, tall, _ )
-    draw.SimpleText( "i", "WeaponIcons", x + wide / 2, y + tall * 0.2, wepIconColor, TEXT_ALIGN_CENTER )
 end
 
 function SWEP:Initialize()
@@ -460,3 +461,4 @@ function SWEP:DrawHUD()
     surface.DrawLine( X - size, Y - size, X - size * 0.5, Y - size )
     surface.DrawLine( X + size, Y - size, X + size * 0.5, Y - size )
 end
+
