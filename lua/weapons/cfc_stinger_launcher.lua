@@ -2,7 +2,7 @@ AddCSLuaFile()
 
 SWEP.Category           = "CFC"
 SWEP.PrintName          = "Stinger Missile"
-SWEP.Author             = "Luna, Redox, StrawWagen"
+SWEP.Author             = "CFC"
 SWEP.Instructions       = "Homing, anti-air RPG.\nFor best results, use on distant targets."
 SWEP.Slot               = 4
 SWEP.SlotPos            = 9
