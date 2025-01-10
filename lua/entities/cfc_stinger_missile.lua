@@ -24,7 +24,6 @@ if SERVER then
     local GetClosestFlare
     if Glide then
         GetClosestFlare = Glide.GetClosestFlare
-
     end
 
     sound.Add( {
@@ -41,17 +40,15 @@ if SERVER then
         }
     } )
 
-    function ENT:SpawnFunction( _, tr, ClassName )
-
+    function ENT:SpawnFunction( _, tr, className )
         if not tr.Hit then return end
 
-        local ent = ents.Create( ClassName )
+        local ent = ents.Create( className )
         ent:SetPos( tr.HitPos + tr.HitNormal * 20 )
         ent:Spawn()
         ent:Activate()
 
         return ent
-
     end
 
     function ENT:BlindFire()
@@ -108,7 +105,6 @@ if SERVER then
             local flare = GetClosestFlare( myPos, self:GetForward(), 700 ) -- glide homing missile is 1500 dist
             if IsValid( flare ) then
                 targetPos = flare:WorldSpaceCenter()
-
             end
         end
 
@@ -118,15 +114,12 @@ if SERVER then
                 if isvector( value ) then
                     targetPos = followEnt:LocalToWorld( value )
                 end
-            elseif IsValid( followsPhysObj ) then
-                targetPos = followEnt:LocalToWorld( followsPhysObj:GetMassCenter() )
             else
                 targetPos = followEnt:WorldSpaceCenter()
             end
         end
 
         local pos = targetPos + followEnt:GetVelocity() * 0.15
-
         local pObj = self:GetPhysicsObject()
 
         if IsValid( pObj ) and not self:GetDisabled() then
@@ -188,8 +181,8 @@ if SERVER then
         if IsValid( target ) then
             if not self.DoneMissileDanger then
                 self:HandleMissileDanger( target )
-
             end
+
             self:FollowTarget( target )
         else
             self:BlindFire()
@@ -251,7 +244,6 @@ if SERVER then
             local obj = hitEnt:GetPhysicsObject()
             if IsValid( obj ) and obj:GetMaterial() and not string.find( obj:GetMaterial(), "metal" ) then
                 dmgSound = "cfc_stinger_impactflesh"
-
             end
         elseif hitEnt:IsPlayer() then
             -- this ends up getting added with the blastdamage, doesn't need to be too strong
@@ -288,7 +280,6 @@ if SERVER then
             hitEnt:TakeDamageInfo( dmginfo )
 
             sound.Play( dmgSound, Pos, 140 )
-
         end
 
         self:Detonate()
@@ -310,11 +301,9 @@ if SERVER then
 
     function ENT:Detonate()
         local dmgMul = stingerDmgMulCvar:GetFloat()
-
-        local Inflictor = self:GetInflictor()
-        local Attacker = self:GetAttacker()
-
-        local ExplodePos = self:WorldSpaceCenter()
+        local inflictor = self:GetInflictor()
+        local attacker = self:GetAttacker()
+        local explodePos = self:WorldSpaceCenter()
 
         local effectdata = EffectData()
             effectdata:SetOrigin( self:GetPos() )
@@ -326,17 +315,16 @@ if SERVER then
         self:Remove()
 
         timer.Simple( 0, function()
-            local FallbackDamager = Entity( 0 )
-            Inflictor = IsValid( Inflictor ) and Inflictor or FallbackDamager
-            Attacker = IsValid( Attacker ) and Attacker or FallbackDamager
+            local fallbackDamager = Entity( 0 )
+            inflictor = IsValid( inflictor ) and inflictor or fallbackDamager
+            attacker = IsValid( attacker ) and attacker or fallbackDamager
 
-            util.BlastDamage( Inflictor, Attacker, ExplodePos, 200 * dmgMul, 150 * dmgMul )
+            util.BlastDamage( inflictor, attacker, explodePos, 200 * dmgMul, 150 * dmgMul )
         end )
     end
 
     function ENT:OnTakeDamage( dmginfo )
-        if dmginfo:GetDamageType() ~= DMG_AIRBOAT then return end
-
+        if not dmginfo:IsDamageType( DMG_AIRBOAT ) then return end
         if self:GetAttacker() == dmginfo:GetAttacker() then return end
 
         self:BreakMissile()
