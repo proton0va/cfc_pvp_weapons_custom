@@ -14,9 +14,9 @@ end
 
 if SERVER then
 
-    local stingerDmgMulCvar = CreateConVar( "cfc_stinger_damagemul", 1, FCVAR_ARCHIVE )
-    local stingerMobilityMul = CreateConVar( "cfc_stinger_mobilitymul", 1, FCVAR_ARCHIVE )
-    local stingerDirectHitPlayerMul = CreateConVar( "cfc_stinger_directhitplayersmul", 1, FCVAR_ARCHIVE )
+    local stingerDmgMulCVar = CreateConVar( "cfc_stinger_damage_mul", 1, FCVAR_ARCHIVE )
+    local stingerMobilityMulCVar = CreateConVar( "cfc_stinger_mobility_mul", 1, FCVAR_ARCHIVE )
+    local stingerDirectHitPlayerMulCVar = CreateConVar( "cfc_stinger_direct_hit_players_mul", 1, FCVAR_ARCHIVE )
 
     local MISSILE_HITBOX_MAXS = Vector( 10, 10, 10 )
     local MISSILE_HITBOX_MINS = -MISSILE_HITBOX_MAXS
@@ -95,7 +95,7 @@ if SERVER then
         end
 
         local speed = math.Clamp( tillFullSpeed * MAX_BLINDFIRE_SPEED, 0, MAX_BLINDFIRE_SPEED )
-        local vel = ( speed * stingerMobilityMul:GetFloat() )
+        local vel = ( speed * stingerMobilityMulCVar:GetFloat() )
         pObj:SetVelocityInstantaneous( self:GetForward() * vel )
 
         local angVel = pObj:GetAngleVelocity() * 0.995 -- bias towards going straight, spiral out of turns
@@ -110,9 +110,10 @@ if SERVER then
 
         -- increase turnrate the longer missile is alive, bear down on far targets.
         -- goal is to punish pilots/drivers who camp far away from players.
+        local mobilMul = stingerMobilityMulCVar:GetFloat()
         local timeAlive = math.abs( self:GetCreationTime() - CurTime() )
-        local turnrateAdd = math.Clamp( timeAlive * LOCKED_TURNRATE_ADDED_PER_SECOND_ALIVE, 0, LOCKED_MAX_TURNRATE_ADDED ) * stingerMobilityMul:GetFloat()
-        local speedAdd = math.Clamp( timeAlive * LOCKED_SPEED_ADDED_PER_SECOND_ALIVE, 0, LOCKED_MAX_SPEED_ADDED ) * stingerMobilityMul:GetFloat()
+        local turnrateAdd = math.Clamp( timeAlive * LOCKED_TURNRATE_ADDED_PER_SECOND_ALIVE, 0, LOCKED_MAX_TURNRATE_ADDED ) * mobilMul
+        local speedAdd = math.Clamp( timeAlive * LOCKED_SPEED_ADDED_PER_SECOND_ALIVE, 0, LOCKED_MAX_SPEED_ADDED ) * mobilMul
 
         local speed = LOCKED_DEFAULT_SPEED
         speed = speed + speedAdd
@@ -266,7 +267,7 @@ if SERVER then
                 dmgSound = "cfc_stinger_impactflesh"
             end
         elseif hitEnt:IsPlayer() then
-            dmgAmount = DIRECTHIT_PLAYER_DAMAGE * stingerDirectHitPlayerMul:GetFloat()
+            dmgAmount = DIRECTHIT_PLAYER_DAMAGE * stingerDirectHitPlayerMulCVar:GetFloat()
             dmgSound = "cfc_stinger_impactflesh"
         end
 
@@ -292,7 +293,7 @@ if SERVER then
         util.Effect( "manhacksparks", effectdata, true, true )
 
         local dmgAmount, dmgSound = self:GetDirectHitDamage( hitEnt )
-        dmgAmount = dmgAmount * stingerDmgMulCvar:GetFloat()
+        dmgAmount = dmgAmount * stingerDmgMulCVar:GetFloat()
 
         local dmginfo = DamageInfo()
             dmginfo:SetDamage( dmgAmount )
@@ -323,7 +324,7 @@ if SERVER then
     end
 
     function ENT:Detonate()
-        local dmgMul = stingerDmgMulCvar:GetFloat()
+        local dmgMul = stingerDmgMulCVar:GetFloat()
         local inflictor = self:GetInflictor()
         local attacker = self:GetAttacker()
         local explodePos = self:WorldSpaceCenter()
