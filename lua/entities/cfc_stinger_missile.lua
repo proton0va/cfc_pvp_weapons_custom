@@ -274,32 +274,32 @@ if SERVER then
     end
 
     function ENT:HitEntity( hitEnt )
-        if IsValid( hitEnt ) then
-            local Pos = self:GetPos()
-            -- hit simfphys car instead of simfphys wheel
-            if hitEnt.GetBaseEnt and IsValid( hitEnt:GetBaseEnt() ) then
-                hitEnt = hitEnt:GetBaseEnt()
-            end
+        if not IsValid( hitEnt ) then return end
 
-            local effectdata = EffectData()
-                effectdata:SetOrigin( Pos )
-                effectdata:SetNormal( -self:GetForward() )
-            util.Effect( "manhacksparks", effectdata, true, true )
-
-            local dmgAmount, dmgSound = self:GetDirectHitDamage( hitEnt )
-            dmgAmount = dmgAmount * stingerDmgMulCvar:GetFloat()
-
-            local dmginfo = DamageInfo()
-                dmginfo:SetDamage( dmgAmount )
-                dmginfo:SetAttacker( IsValid( self:GetAttacker() ) and self:GetAttacker() or self )
-                dmginfo:SetDamageType( DMG_DIRECT )
-                dmginfo:SetInflictor( self )
-                dmginfo:SetDamagePosition( Pos )
-                dmginfo:SetDamageForce( self:GetForward() * dmgAmount * 500 )
-            hitEnt:TakeDamageInfo( dmginfo )
-
-            sound.Play( dmgSound, Pos, 140 )
+        local Pos = self:GetPos()
+        -- hit simfphys car instead of simfphys wheel
+        if hitEnt.GetBaseEnt and IsValid( hitEnt:GetBaseEnt() ) then
+            hitEnt = hitEnt:GetBaseEnt()
         end
+
+        local effectdata = EffectData()
+            effectdata:SetOrigin( Pos )
+            effectdata:SetNormal( -self:GetForward() )
+        util.Effect( "manhacksparks", effectdata, true, true )
+
+        local dmgAmount, dmgSound = self:GetDirectHitDamage( hitEnt )
+        dmgAmount = dmgAmount * stingerDmgMulCvar:GetFloat()
+
+        local dmginfo = DamageInfo()
+            dmginfo:SetDamage( dmgAmount )
+            dmginfo:SetAttacker( IsValid( self:GetAttacker() ) and self:GetAttacker() or self )
+            dmginfo:SetDamageType( DMG_DIRECT )
+            dmginfo:SetInflictor( self )
+            dmginfo:SetDamagePosition( Pos )
+            dmginfo:SetDamageForce( self:GetForward() * dmgAmount * 500 )
+        hitEnt:TakeDamageInfo( dmginfo )
+
+        sound.Play( dmgSound, Pos, 140 )
 
         self:Detonate()
     end
