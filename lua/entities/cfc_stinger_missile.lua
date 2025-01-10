@@ -23,6 +23,19 @@ if SERVER then
     local BLIND_STABILITY_BEFORE_MAXSPEED = 0.08
     local MAX_BLINDFIRE_SPEED = 3000
 
+    local LOCKED_TURNRATE_ADDED_PER_SECOND_ALIVE = 75
+    local LOCKED_SPEED_ADDED_PER_SECOND_ALIVE = 650
+    local LOCKED_MAX_TURNRATE_ADDED = 400
+    local LOCKED_MAX_SPEED_ADDED = 10000
+    local LOCKED_DEFAULT_SPEED = 1500
+    local LOCKED_DEFAULT_TURNRATE = 20
+    local LOCKED_TARGET_LEAD_MUL = 0.15
+    local LOCKED_LOSE_TARGET_ANG = 95
+    local LOCKED_START_CHECKING_TRACES_DIST = 750^2
+    local LOCKED_DETONATE_ANYWAYS_DIST = 75^2
+
+    local GLIDE_FLARE_YIELD_RADIUS = 700 -- glide homing missiles are 1500 dist
+
     local GetClosestFlare
     if Glide then
         GetClosestFlare = Glide.GetClosestFlare
@@ -54,8 +67,7 @@ if SERVER then
     end
 
     function ENT:BlindFire()
-        if self:GetDisabled() then return end
-        if self:DoHitTrace() then return end
+        if self:DoHitTrace() then return end -- we hit something
 
         local pObj = self:GetPhysicsObject()
         if not IsValid( pObj ) then return end
@@ -82,20 +94,23 @@ if SERVER then
     end
 
     function ENT:FollowTarget( followEnt )
+        local pObj = self:GetPhysicsObject()
+        if not IsValid( pObj ) then return end
+
         -- increase turnrate the longer missile is alive, bear down on far targets.
         -- goal is to punish pilots/drivers who camp far away from players.
         local timeAlive = math.abs( self:GetCreationTime() - CurTime() )
-        local turnrateAdd = math.Clamp( timeAlive * 75, 0, 400 ) * stingerMobilityMul:GetFloat()
-        local speedAdd = math.Clamp( timeAlive * 650, 0, 10000 ) * stingerMobilityMul:GetFloat()
+        local turnrateAdd = math.Clamp( timeAlive * LOCKED_TURNRATE_ADDED_PER_SECOND_ALIVE, 0, LOCKED_MAX_TURNRATE_ADDED ) * stingerMobilityMul:GetFloat()
+        local speedAdd = math.Clamp( timeAlive * LOCKED_SPEED_ADDED_PER_SECOND_ALIVE, 0, LOCKED_MAX_SPEED_ADDED ) * stingerMobilityMul:GetFloat()
 
-        local speed = self:GetDirtyMissile() and 1000 or 1500
+        local speed = LOCKED_DEFAULT_SPEED
         speed = speed + speedAdd
 
-        local turnrate = 20
+        local turnrate = LOCKED_DEFAULT_TURNRATE
         turnrate = turnrate + turnrateAdd
 
         local parent = followEnt:GetParent()
-        if IsValid( parent ) and parent:IsVehicle() then
+        if IsValid( parent ) and parent:IsVehicle() then -- glide vehicle fix
             followEnt = parent
         end
 
@@ -103,7 +118,7 @@ if SERVER then
         local targetPos
 
         if GetClosestFlare then -- glide flares do something
-            local flare = GetClosestFlare( myPos, self:GetForward(), 700 ) -- glide homing missile is 1500 dist
+            local flare = GetClosestFlare( myPos, self:GetForward(), GLIDE_FLARE_YIELD_RADIUS )
             if IsValid( flare ) then
                 targetPos = flare:WorldSpaceCenter()
             end
@@ -120,41 +135,37 @@ if SERVER then
             end
         end
 
-        local pos = targetPos + followEnt:GetVelocity() * 0.15
-        local pObj = self:GetPhysicsObject()
+        targetPos = targetPos + followEnt:GetVelocity() * LOCKED_TARGET_LEAD_MUL
 
-        if IsValid( pObj ) and not self:GetDisabled() then
-            local subtractionProduct = pos - myPos
-            local distToTargSqr = subtractionProduct:LengthSqr()
-            local targetdir = subtractionProduct:GetNormalized()
+        local subtractionProduct = targetPos - myPos
+        local distToTargSqr = subtractionProduct:LengthSqr()
+        local targetdir = subtractionProduct:GetNormalized()
 
-            local AF = self:WorldToLocalAngles( targetdir:Angle() )
-            local badAngles = AF.p > 95 or AF.y > 95
+        local AF = self:WorldToLocalAngles( targetdir:Angle() )
+        local badAngles = AF.p > LOCKED_LOSE_TARGET_ANG or AF.y > LOCKED_LOSE_TARGET_ANG
 
-            -- if you want to make a plane/vehicle not get targeted by the launcher then see CFC_Stinger_BlockLockon hook, in the launcher
+        -- if you want to make a plane/vehicle not get targeted by the launcher then see CFC_Stinger_BlockLockon hook, in the launcher
 
-            if distToTargSqr < 500^2 and self:DoHitTrace( myPos ) then -- close to target, start doing traces in front of us
-                return
-            -- target is cheating! they're no collided!
-            elseif distToTargSqr < 75^2 then
-                self:HitEntity( followEnt )
-                return
-            -- target escaped!
-            elseif badAngles then
-                self:SetLockOn( nil )
-                return
-            end
-
-            AF.p = math.Clamp( AF.p * 400, -turnrate, turnrate )
-            AF.y = math.Clamp( AF.y * 400, -turnrate, turnrate )
-            AF.r = math.Clamp( AF.r * 400, -turnrate, turnrate )
-
-            local AVel = pObj:GetAngleVelocity()
-            if not IsValid( pObj ) then return end
-            pObj:AddAngleVelocity( Vector( AF.r, AF.p, AF.y ) - AVel )
-
-            pObj:SetVelocityInstantaneous( self:GetForward() * speed )
+        if distToTargSqr < LOCKED_START_CHECKING_TRACES_DIST and self:DoHitTrace( myPos ) then -- close to target, start doing traces in front of us
+            return
+        -- target is cheating! they're no collided!
+        elseif distToTargSqr < LOCKED_DETONATE_ANYWAYS_DIST then
+            self:HitEntity( followEnt )
+            return
+        -- target escaped!
+        elseif badAngles then
+            self:SetLockOn( nil )
+            return
         end
+
+        AF.p = math.Clamp( AF.p * 400, -turnrate, turnrate )
+        AF.y = math.Clamp( AF.y * 400, -turnrate, turnrate )
+        AF.r = math.Clamp( AF.r * 400, -turnrate, turnrate )
+
+        local AVel = pObj:GetAngleVelocity()
+        pObj:AddAngleVelocity( Vector( AF.r, AF.p, AF.y ) - AVel )
+
+        pObj:SetVelocityInstantaneous( self:GetForward() * speed )
     end
 
     function ENT:Initialize()
@@ -175,6 +186,8 @@ if SERVER then
     end
 
     function ENT:Think()
+        if self:GetDisabled() then return end
+
         local curtime = CurTime()
         self:NextThink( curtime )
 
