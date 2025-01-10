@@ -53,7 +53,6 @@ if SERVER then
         return ent
     end
 
-
     function ENT:BlindFire()
         if self:GetDisabled() then return end
         if self:DoHitTrace() then return end
@@ -102,7 +101,6 @@ if SERVER then
 
         local myPos = self:GetPos()
         local targetPos
-        local followsPhysObj = followEnt:GetPhysicsObject()
 
         if GetClosestFlare then -- glide flares do something
             local flare = GetClosestFlare( myPos, self:GetForward(), 700 ) -- glide homing missile is 1500 dist
