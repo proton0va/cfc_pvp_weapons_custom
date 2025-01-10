@@ -30,8 +30,9 @@ if SERVER then
     local DIRECTHIT_PLAYER_DAMAGE = 70 -- ends up getting added with the blastdamage, doesn't need to be too strong
 
     local BLINDFIRE_MAXSPEED_TIME = 1.5
-    local BLIND_STABILITY_AT_MAXSPEED = 0.15
-    local BLIND_STABILITY_BEFORE_MAXSPEED = 0.08
+    local BLIND_STABILITY_AT_MAXSPEED = 0.25
+    local BLIND_STABILITY_BEFORE_MAXSPEED = 0.10
+    local BLINDFIRE_ANGVEL_DECAY = 0.98
     local MAX_BLINDFIRE_SPEED = 3000
 
     local LOCKED_TURNRATE_ADDED_PER_SECOND_ALIVE = 75
@@ -41,11 +42,11 @@ if SERVER then
     local LOCKED_DEFAULT_SPEED = 1500
     local LOCKED_DEFAULT_TURNRATE = 20
     local LOCKED_TARGET_LEAD_MUL = 0.15
-    local LOCKED_LOSE_TARGET_ANG = 95
+    local LOCKED_LOSE_TARGET_ANG = 85
     local LOCKED_START_CHECKING_TRACES_DIST = 750^2
     local LOCKED_DETONATE_ANYWAYS_DIST = 75^2
 
-    local GLIDE_FLARE_YIELD_RADIUS = 700 -- glide homing missiles are 1500 dist
+    local GLIDE_FLARE_YIELD_RADIUS = 800 -- glide homing missiles are 1500 dist
 
     local GetClosestFlare
     if Glide then
@@ -98,7 +99,7 @@ if SERVER then
         local vel = ( speed * stingerMobilityMulCVar:GetFloat() )
         pObj:SetVelocityInstantaneous( self:GetForward() * vel )
 
-        local angVel = pObj:GetAngleVelocity() * 0.995 -- bias towards going straight, spiral out of turns
+        local angVel = pObj:GetAngleVelocity() * BLINDFIRE_ANGVEL_DECAY -- bias towards going straight, spiral out of turns
         angVel = angVel + VectorRand() * instability -- but not too straight
 
         pObj:SetAngleVelocity( angVel )

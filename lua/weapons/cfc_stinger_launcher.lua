@@ -29,7 +29,7 @@ SWEP.Secondary.DefaultClip   = -1
 SWEP.Secondary.Automatic     = false
 SWEP.Secondary.Ammo          = "none"
 
-SWEP.ReloadSpeedMul = 0.45
+SWEP.ReloadSpeedMul = 0.5
 SWEP.UnmodReloadTime = 1.8 -- rough estimate of unmodified reload time
 
 if CLIENT then
@@ -53,9 +53,12 @@ SWEP.CFC_FirstTimeHints = {
 }
 
 function SWEP:SetupDataTables()
-    self:NetworkVar( "Entity", 0, "ClosestEnt" )
-    self:NetworkVar( "Bool", 0, "IsLocked" )
-    self:NetworkVar( "Float", 0, "LockedOnTime" )
+    self:NetworkVar( "Entity", "ClosestEnt" )
+    self:NetworkVar( "Bool", "IsLocked" )
+    self:NetworkVar( "Float", "LockedOnTime" )
+
+    self:NetworkVar( "Bool", "IsReloading" )
+    self:NetworkVar( "Float", "ReloadFinish" )
 end
 
 function SWEP:Initialize()
@@ -122,6 +125,9 @@ function SWEP:GetPotentialTargets()
 end
 
 function SWEP:Think()
+    if self:GetIsReloading() and self:GetReloadFinish() < CurTime() then
+        self:SetIsReloading( false )
+    end
     if CLIENT then return end
 
     self.nextSortTargets = self.nextSortTargets or 0
@@ -274,10 +280,8 @@ function SWEP:CanSee( entity, owner )
 end
 
 function SWEP:PrimaryAttack()
-    if self:Clip1() <= 0 then
-        self:Reload()
-        return
-    end
+    if self:GetNextPrimaryFire() > CurTime() then return end
+    if self:GetIsReloading() then return end
 
     if not self:CanPrimaryAttack() then return end
 
@@ -314,11 +318,7 @@ function SWEP:PrimaryAttack()
         ent:SetLockOn( lockOnTarget )
     end
 
-    timer.Simple( 0, function() -- fix rare anim bug
-        if not IsValid( self ) then return end
-        if self:Clip1() > 0 then return end
-        self:Reload()
-    end )
+    self:Reload()
 end
 
 function SWEP:SecondaryAttack()
@@ -341,15 +341,21 @@ function SWEP:Deploy()
 end
 
 function SWEP:Reload()
+    if self:GetIsReloading() then return end
     if self:Clip1() > 0 or self:GetOwner():GetAmmoCount( self.Primary.Ammo ) <= 0 then return end
+
+    self:SetIsReloading( true )
     self:UnLock()
     self:DefaultReload( ACT_VM_RELOAD )
 
     local reloadSpeedMul = self.ReloadSpeedMul
     local unmodReloadTime = self.UnmodReloadTime -- match the slower anim
 
-    local nextFire = CurTime() + ( unmodReloadTime / reloadSpeedMul )
+    local reloadTime = unmodReloadTime / reloadSpeedMul
+    local nextFire = CurTime() + reloadTime
     self:SetNextPrimaryFire( nextFire )
+
+    self:SetReloadFinish( nextFire + 0.25 )
 
     local owner = self:GetOwner()
     local vm = owner:GetViewModel()
