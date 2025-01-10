@@ -18,6 +18,17 @@ if SERVER then
     local stingerMobilityMul = CreateConVar( "cfc_stinger_mobilitymul", 1, FCVAR_ARCHIVE )
     local stingerDirectHitPlayerMul = CreateConVar( "cfc_stinger_directhitplayersmul", 1, FCVAR_ARCHIVE )
 
+    local MISSILE_HITBOX_MAXS = Vector( 10, 10, 10 )
+    local MISSILE_HITBOX_MINS = -MISSILE_HITBOX_MAXS
+    local MISSILE_HITTRACE_DIST = 20
+
+    local BLAST_DAMAGE = 150
+    local BLAST_RADIUS = 200
+    local DIRECTHIT_GENERIC_DAMAGE = 800
+    local DIRECTHIT_CAR_DAMAGE = 1250
+    local DIRECTHIT_NPC_DAMAGE = 200
+    local DIRECTHIT_PLAYER_DAMAGE = 70 -- ends up getting added with the blastdamage, doesn't need to be too strong
+
     local BLINDFIRE_MAXSPEED_TIME = 1.5
     local BLIND_STABILITY_AT_MAXSPEED = 0.15
     local BLIND_STABILITY_BEFORE_MAXSPEED = 0.08
@@ -186,13 +197,11 @@ if SERVER then
     end
 
     function ENT:Think()
-        if self:GetDisabled() then return end
-
         local curtime = CurTime()
         self:NextThink( curtime )
 
         local target = self:GetLockOn()
-        if IsValid( target ) then
+        if not self:GetDisabled() and IsValid( target ) then
             if not self.DoneMissileDanger then
                 self:HandleMissileDanger( target )
             end
@@ -219,20 +228,17 @@ if SERVER then
         end
     end
 
-    local missileHitboxMax = Vector( 10, 10, 10 )
-    local missileHitboxMins = -missileHitboxMax
-
     function ENT:DoHitTrace( myPos )
         local startPos = myPos or self:GetPos()
-        local offset = self:GetForward() * 20
+        local offset = self:GetForward() * MISSILE_HITTRACE_DIST
         local inflic = self:GetInflictor()
 
         local trResult = util.TraceHull( {
             start = startPos,
             endpos = startPos + offset,
             filter = { self, self:GetOwner(), inflic },
-            maxs = missileHitboxMax,
-            mins = missileHitboxMins,
+            maxs = MISSILE_HITBOX_MAXS,
+            mins = MISSILE_HITBOX_MINS,
             mask = MASK_SOLID,
         } )
 
@@ -248,20 +254,19 @@ if SERVER then
         local hookResultDmg, hookResultSound = hook.Run( "LFS.MissileDirectHitDamage", self, hitEnt )
         if hookResultDmg ~= nil and isnumber( hookResultDmg ) then return hookResultDmg, hookResultSound end
 
-        local dmgAmount = 800
+        local dmgAmount = DIRECTHIT_GENERIC_DAMAGE
         local dmgSound = "Missile.ShotDown"
 
         if hitEnt.IsSimfphyscar then
-            dmgAmount = 1250
+            dmgAmount = DIRECTHIT_CAR_DAMAGE
         elseif hitEnt:IsNPC() or hitEnt:IsNextBot() then
-            dmgAmount = 200
+            dmgAmount = DIRECTHIT_NPC_DAMAGE
             local obj = hitEnt:GetPhysicsObject()
             if IsValid( obj ) and obj:GetMaterial() and not string.find( obj:GetMaterial(), "metal" ) then
                 dmgSound = "cfc_stinger_impactflesh"
             end
         elseif hitEnt:IsPlayer() then
-            -- this ends up getting added with the blastdamage, doesn't need to be too strong
-            dmgAmount = 75 * stingerDirectHitPlayerMul:GetFloat()
+            dmgAmount = DIRECTHIT_PLAYER_DAMAGE * stingerDirectHitPlayerMul:GetFloat()
             dmgSound = "cfc_stinger_impactflesh"
         end
 
@@ -333,7 +338,7 @@ if SERVER then
             inflictor = IsValid( inflictor ) and inflictor or fallbackDamager
             attacker = IsValid( attacker ) and attacker or fallbackDamager
 
-            util.BlastDamage( inflictor, attacker, explodePos, 200 * dmgMul, 150 * dmgMul )
+            util.BlastDamage( inflictor, attacker, explodePos, BLAST_RADIUS * dmgMul, BLAST_DAMAGE * dmgMul )
         end )
     end
 
