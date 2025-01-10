@@ -19,6 +19,8 @@ if SERVER then
     local stingerDirectHitPlayerMul = CreateConVar( "cfc_stinger_directhitplayersmul", 1, FCVAR_ARCHIVE )
 
     local BLINDFIRE_MAXSPEED_TIME = 1.5
+    local BLIND_STABILITY_AT_MAXSPEED = 0.15
+    local BLIND_STABILITY_BEFORE_MAXSPEED = 0.08
     local MAX_BLINDFIRE_SPEED = 3000
 
     local GetClosestFlare
@@ -51,32 +53,33 @@ if SERVER then
         return ent
     end
 
+
     function ENT:BlindFire()
         if self:GetDisabled() then return end
         if self:DoHitTrace() then return end
 
         local pObj = self:GetPhysicsObject()
+        if not IsValid( pObj ) then return end
 
-        if IsValid( pObj ) then
-            -- ramp up to full speed over a bit less than 1 second
-            local timeAlive = math.abs( self:GetCreationTime() - CurTime() )
-            local tillFullSpeed = timeAlive / BLINDFIRE_MAXSPEED_TIME
-            local speed = math.Clamp( tillFullSpeed * MAX_BLINDFIRE_SPEED, 0, MAX_BLINDFIRE_SPEED )
-            local vel = ( speed * stingerMobilityMul:GetFloat() )
-            pObj:SetVelocityInstantaneous( self:GetForward() * vel )
+        -- ramp up to full speed over a bit less than 1 second
+        local timeAlive = math.abs( self:GetCreationTime() - CurTime() )
+        local tillFullSpeed = timeAlive / BLINDFIRE_MAXSPEED_TIME
 
-            local angVel = pObj:GetAngleVelocity() * 0.995 -- bias towards going straight, spiral out of turns
-
-            local instability
-            if tillFullSpeed >= 1 then -- drift a LOT once we get to max speed
-                instability = 0.15
-            else
-                instability = 0.08
-            end
-            angVel = angVel + VectorRand() * instability -- but dont go perfectly straight
-
-            pObj:SetAngleVelocity( angVel )
+        local instability
+        if tillFullSpeed >= 1 then -- drift a LOT once we get to max speed
+            instability = BLIND_STABILITY_AT_MAXSPEED
+        else
+            instability = BLIND_STABILITY_BEFORE_MAXSPEED
         end
+
+        local speed = math.Clamp( tillFullSpeed * MAX_BLINDFIRE_SPEED, 0, MAX_BLINDFIRE_SPEED )
+        local vel = ( speed * stingerMobilityMul:GetFloat() )
+        pObj:SetVelocityInstantaneous( self:GetForward() * vel )
+
+        local angVel = pObj:GetAngleVelocity() * 0.995 -- bias towards going straight, spiral out of turns
+        angVel = angVel + VectorRand() * instability -- but not too straight
+
+        pObj:SetAngleVelocity( angVel )
     end
 
     function ENT:FollowTarget( followEnt )
