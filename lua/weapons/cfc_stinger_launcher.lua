@@ -66,7 +66,7 @@ local stingerLockTimeVar = CreateConVar( "cfc_stinger_locktime", 4, { FCVAR_ARCH
 local stingerLockAngleVar
 
 if SERVER then -- this mess stays because cvars.AddChangeCallback doesnt work with replicated convars
-    stingerLockAngleVar = CreateConVar( "cfc_stinger_lockangle", 7, FCVAR_ARCHIVE )
+    stingerLockAngleVar = CreateConVar( "cfc_stinger_lockangle", 9, FCVAR_ARCHIVE )
 
     local maxRangeVar = CreateConVar( "cfc_stinger_maxrange", 60000, { FCVAR_ARCHIVE } )
     local maxRange
@@ -274,8 +274,9 @@ function SWEP:CanSee( entity, owner )
 end
 
 function SWEP:PrimaryAttack()
-    if SERVER and self:Clip1() <= 0 then
+    if self:Clip1() <= 0 then
         self:Reload()
+        return
     end
 
     if not self:CanPrimaryAttack() then return end
@@ -313,13 +314,11 @@ function SWEP:PrimaryAttack()
         ent:SetLockOn( lockOnTarget )
     end
 
-    if SERVER then
-        timer.Simple( 0, function() -- fix rare anim bug
-            if not IsValid( self ) then return end
-            if self:Clip1() > 0 then return end
-            self:Reload()
-        end )
-    end
+    timer.Simple( 0, function() -- fix rare anim bug
+        if not IsValid( self ) then return end
+        if self:Clip1() > 0 then return end
+        self:Reload()
+    end )
 end
 
 function SWEP:SecondaryAttack()
