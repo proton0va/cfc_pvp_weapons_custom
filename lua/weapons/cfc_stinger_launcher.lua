@@ -81,7 +81,6 @@ if SERVER then -- this mess stays because cvars.AddChangeCallback doesnt work wi
         end
 
         SetGlobal2Int( "cfc_stinger_maxrange", maxRange )
-        print( maxRange )
     end
 
     cvars.AddChangeCallback( "cfc_stinger_maxrange", doMaxRange, "CFC_Stinger_Range" )
