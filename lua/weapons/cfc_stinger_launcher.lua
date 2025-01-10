@@ -440,8 +440,8 @@ function SWEP:DrawHUD()
     surface.DrawLine( posX + size, posY + size, posX + size, posY + size * 0.5 )
     surface.DrawLine( posX + size, posY - size, posX + size, posY - size * 0.5 )
 
-    surface.DrawLine( X - size, Y - size, X - size * 0.5, Y - size )
-    surface.DrawLine( X + size, Y - size, X + size * 0.5, Y - size )
+    surface.DrawLine( posX - size, posY - size, posX - size * 0.5, posY - size )
+    surface.DrawLine( posX + size, posY - size, posX + size * 0.5, posY - size )
 
     posX = posX + 1
     posY = posY + 1
