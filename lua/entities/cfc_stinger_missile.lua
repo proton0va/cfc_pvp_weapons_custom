@@ -18,8 +18,8 @@ if SERVER then
     local stingerMobilityMul = CreateConVar( "cfc_stinger_mobilitymul", 1, FCVAR_ARCHIVE )
     local stingerDirectHitPlayerMul = CreateConVar( "cfc_stinger_directhitplayersmul", 1, FCVAR_ARCHIVE )
 
-    local blindfireMaxSpeedTime = 1.5
-    local maxBlindfireSpeed = 3000
+    local BLINDFIRE_MAXSPEED_TIME = 1.5
+    local MAX_BLINDFIRE_SPEED = 3000
 
     local GetClosestFlare
     if Glide then
@@ -63,8 +63,8 @@ if SERVER then
         if IsValid( pObj ) then
             -- ramp up to full speed over a bit less than 1 second
             local timeAlive = math.abs( self:GetCreationTime() - CurTime() )
-            local tillFullSpeed = timeAlive / blindfireMaxSpeedTime
-            local speed = math.Clamp( tillFullSpeed * maxBlindfireSpeed, 0, maxBlindfireSpeed )
+            local tillFullSpeed = timeAlive / BLINDFIRE_MAXSPEED_TIME
+            local speed = math.Clamp( tillFullSpeed * MAX_BLINDFIRE_SPEED, 0, MAX_BLINDFIRE_SPEED )
             local vel = ( speed * stingerMobilityMul:GetFloat() )
             pObj:SetVelocityInstantaneous( self:GetForward() * vel )
 
