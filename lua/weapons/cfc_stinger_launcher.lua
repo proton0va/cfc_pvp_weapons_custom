@@ -185,7 +185,7 @@ function SWEP:Think()
         local closestDist = math.huge
         local smallestAng = math.huge
 
-        for index, vehicle in ipairs( self.foundVehicles ) do
+        for index, vehicle in pairs( self.foundVehicles ) do
             if not IsValid( vehicle ) then table.remove( self.foundVehicles, index ) continue end
 
             local hookResult = hook.Run( "CFC_Stinger_BlockLockon", self, vehicle )
@@ -407,11 +407,11 @@ function SWEP:DrawHUD()
     local pos = ent:LocalToWorld( ent:OBBCenter() )
 
     local scr = pos:ToScreen()
-    local scrW = ScrW() / 2
-    local scrH = ScrH() / 2
+    local scrWH = ScrW() / 2
+    local scrHH = ScrH() / 2
 
-    local X = scr.x
-    local Y = scr.y
+    local posX = scr.x
+    local posY = scr.y
 
     draw.NoTexture()
     if self:GetIsLocked() then
@@ -420,7 +420,7 @@ function SWEP:DrawHUD()
         surface.SetDrawColor( 200, 200, 200, 255 )
     end
 
-    surface.DrawLine( scrW, scrH, X, Y )
+    surface.DrawLine( scrWH, scrHH, posX, posY )
 
     local size = 0
     if self:GetIsLocked() then
@@ -433,32 +433,32 @@ function SWEP:DrawHUD()
 
     end
 
-    surface.DrawLine( X - size, Y + size, X - size * 0.5, Y + size )
-    surface.DrawLine( X + size, Y + size, X + size * 0.5, Y + size )
+    surface.DrawLine( posX - size, posY + size, posX - size * 0.5, posY + size )
+    surface.DrawLine( posX + size, posY + size, posX + size * 0.5, posY + size )
 
-    surface.DrawLine( X - size, Y + size, X - size, Y + size * 0.5 )
-    surface.DrawLine( X - size, Y - size, X - size, Y - size * 0.5 )
+    surface.DrawLine( posX - size, posY + size, posX - size, posY + size * 0.5 )
+    surface.DrawLine( posX - size, posY - size, posX - size, posY - size * 0.5 )
 
-    surface.DrawLine( X + size, Y + size, X + size, Y + size * 0.5 )
-    surface.DrawLine( X + size, Y - size, X + size, Y - size * 0.5 )
+    surface.DrawLine( posX + size, posY + size, posX + size, posY + size * 0.5 )
+    surface.DrawLine( posX + size, posY - size, posX + size, posY - size * 0.5 )
 
-    surface.DrawLine( X - size, Y - size, X - size * 0.5, Y - size )
-    surface.DrawLine( X + size, Y - size, X + size * 0.5, Y - size )
+    surface.DrawLine( posX - size, posY - size, posX - size * 0.5, posY - size )
+    surface.DrawLine( posX + size, posY - size, posX + size * 0.5, posY - size )
 
 
-    X = X + 1
-    Y = Y + 1
+    posX = posX + 1
+    posY = posY + 1
     surface.SetDrawColor( 0, 0, 0, 100 )
-    surface.DrawLine( X - size, Y + size, X - size * 0.5, Y + size )
-    surface.DrawLine( X + size, Y + size, X + size * 0.5, Y + size )
+    surface.DrawLine( posX - size, posY + size, posX - size * 0.5, posY + size )
+    surface.DrawLine( posX + size, posY + size, posX + size * 0.5, posY + size )
 
-    surface.DrawLine( X - size, Y + size, X - size, Y + size * 0.5 )
-    surface.DrawLine( X - size, Y - size, X - size, Y - size * 0.5 )
+    surface.DrawLine( posX - size, posY + size, posX - size, posY + size * 0.5 )
+    surface.DrawLine( posX - size, posY - size, posX - size, posY - size * 0.5 )
 
-    surface.DrawLine( X + size, Y + size, X + size, Y + size * 0.5 )
-    surface.DrawLine( X + size, Y - size, X + size, Y - size * 0.5 )
+    surface.DrawLine( posX + size, posY + size, posX + size, posY + size * 0.5 )
+    surface.DrawLine( posX + size, posY - size, posX + size, posY - size * 0.5 )
 
-    surface.DrawLine( X - size, Y - size, X - size * 0.5, Y - size )
-    surface.DrawLine( X + size, Y - size, X + size * 0.5, Y - size )
+    surface.DrawLine( posX - size, posY - size, posX - size * 0.5, posY - size )
+    surface.DrawLine( posX + size, posY - size, posX + size * 0.5, posY - size )
 end
 

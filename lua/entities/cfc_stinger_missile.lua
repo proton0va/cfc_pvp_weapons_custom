@@ -274,7 +274,11 @@ if SERVER then
     end
 
     function ENT:HitEntity( hitEnt )
-        if not IsValid( hitEnt ) then return end
+        if not IsValid( hitEnt ) then
+            self:Detonate() -- hit world
+            return
+
+        end
 
         local Pos = self:GetPos()
         -- hit simfphys car instead of simfphys wheel
