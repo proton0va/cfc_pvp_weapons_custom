@@ -25,7 +25,7 @@ function EFFECT:Init( data )
     if IsValid( self.Entity ) then
         self.OldPos = self.Entity:LocalToWorld( self.Offset )
 
-        self.Emitter = ParticleEmitter( self.Entity:LocalToWorld( self.OldPos ), false )
+        self.Emitter = ParticleEmitter( self.OldPos, false )
     end
 end
 
