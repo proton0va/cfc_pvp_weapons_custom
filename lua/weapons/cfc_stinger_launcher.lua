@@ -62,31 +62,31 @@ function SWEP:Initialize()
     self:SetHoldType( self.HoldType )
 end
 
-local stingerLockTime = CreateConVar( "cfc_stinger_locktime", 4, { FCVAR_ARCHIVE, FCVAR_REPLICATED } )
-local stingerLockAngle
+local stingerLockTimeVar = CreateConVar( "cfc_stinger_locktime", 4, { FCVAR_ARCHIVE, FCVAR_REPLICATED } )
+local stingerLockAngleVar
 
-if SERVER then
-    stingerLockAngle = CreateConVar( "cfc_stinger_lockangle", 7, FCVAR_ARCHIVE )
+if SERVER then -- this mess stays because cvars.AddChangeCallback doesnt work with replicated convars
+    stingerLockAngleVar = CreateConVar( "cfc_stinger_lockangle", 7, FCVAR_ARCHIVE )
 
-    local maxRange = CreateConVar( "cfc_stinger_maxrange", 60000, { FCVAR_ARCHIVE } ):GetInt()
-    SetGlobalInt( "cfc_stinger_maxrange", maxRange )
-
-    cvars.AddChangeCallback( "cfc_stinger_maxrange", function( _, _, value )
-        SetGlobalInt( "cfc_stinger_maxrange", tonumber( value ) )
-        maxRange = tonumber( value )
-    end, "CFC_Stinger_Range" )
-
-    local function setFogRange()
+    local maxRangeVar = CreateConVar( "cfc_stinger_maxrange", 60000, { FCVAR_ARCHIVE } )
+    local maxRange
+    local function doMaxRange()
+        maxRange = maxRangeVar:GetInt()
         local fogController = ents.FindByClass( "env_fog_controller" )[1]
-        if not IsValid( fogController ) then return end
+        if IsValid( fogController ) then
+            local fogRange = fogController:GetKeyValues().farz
+            if fogRange > 0 then -- valid farz pls
+                maxRange = math.min( maxRange, fogRange )
+            end
+        end
 
-        local fogRange = fogController:GetKeyValues().farz
-        if fogRange == -1 then return end
-        SetGlobalInt( "cfc_stinger_maxrange", math.min( maxRange, fogRange ) )
+        SetGlobal2Int( "cfc_stinger_maxrange", maxRange )
+        print( maxRange )
     end
 
-    hook.Add( "InitPostEntity", "CFC_Stinger_Range", setFogRange )
-    setFogRange() -- Autorefresh
+    cvars.AddChangeCallback( "cfc_stinger_maxrange", doMaxRange, "CFC_Stinger_Range" )
+    hook.Add( "InitPostEntity", "CFC_Stinger_Range", doMaxRange )
+    doMaxRange() -- autorefresh
 end
 
 function SWEP:GetPotentialTargets()
@@ -132,7 +132,7 @@ function SWEP:Think()
     local curtime = CurTime()
     local owner = self:GetOwner()
     local findTime = self.findTime
-    local lockOnTime = stingerLockTime:GetFloat()
+    local lockOnTime = stingerLockTimeVar:GetFloat()
 
     if findTime + lockOnTime < curtime and IsValid( self:GetClosestEnt() ) then
         self.Locked = true
@@ -178,8 +178,8 @@ function SWEP:Think()
         local AimForward = owner:GetAimVector()
         local startpos = owner:GetShootPos()
 
-        local maxDist = GetGlobalInt( "cfc_stinger_maxrange" )
-        local lockOnAng = stingerLockAngle:GetInt()
+        local maxDist = GetGlobal2Int( "cfc_stinger_maxrange" )
+        local lockOnAng = stingerLockAngleVar:GetInt()
 
         local vehicles = {}
         local closestEnt = NULL
@@ -428,7 +428,7 @@ function SWEP:DrawHUD()
         size = lockedSize
     else
         local untilLocked = self:GetLockedOnTime() - CurTime()
-        local normalized = untilLocked / stingerLockTime:GetFloat()
+        local normalized = untilLocked / stingerLockTimeVar:GetFloat()
         size = math.Clamp( lockedSize + ( normalized * difference ), lockedSize, notLockedSize )
     end
 
