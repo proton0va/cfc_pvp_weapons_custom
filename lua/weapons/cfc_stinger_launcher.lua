@@ -118,6 +118,7 @@ function SWEP:GetPotentialTargets()
             end
         end
     end
+
     return foundVehicles
 end
 
@@ -240,7 +241,6 @@ function SWEP:Think()
             if closestEnt.IsGlideVehicle then
                 -- If the target is a Glide vehicle, notify the passengers
                 Glide.SendLockOnDanger( closestEnt:GetAllPlayers() )
-
             elseif closestEnt.GetDriver then
                 -- If the target is another type of vehicle, notify the driver
                 local driver = closestEnt:GetDriver()
@@ -270,6 +270,7 @@ function SWEP:CanSee( entity, owner )
     }
 
     local trResult = util.TraceLine( trStruc )
+
     return ( trResult.HitPos - pos ):Length() < 500
 end
 
@@ -325,7 +326,9 @@ end
 function SWEP:SecondaryAttack()
     if not IsValid( self:GetClosestEnt() ) then return false end
     if not IsFirstTimePredicted() then return end
+
     self:SetNextSecondaryFire( CurTime() + 0.5 )
+
     if CLIENT then
         self:EmitSound( "buttons/lightswitch2.wav", 75, math.random( 150, 175 ), 0.25 )
     else
@@ -335,6 +338,7 @@ end
 
 function SWEP:Deploy()
     self:SendWeaponAnim( ACT_VM_DRAW )
+
     return true
 end
 
@@ -353,7 +357,6 @@ function SWEP:Reload()
     local vm = owner:GetViewModel()
     if IsValid( vm ) then
         vm:SetPlaybackRate( reloadSpeedMul ) -- slower anim
-
     end
 end
 
@@ -378,6 +381,7 @@ end
 
 function SWEP:Holster()
     self:StopSounds()
+
     return true
 end
 
@@ -397,15 +401,12 @@ local difference = notLockedSize - lockedSize
 
 function SWEP:DrawHUD()
     local ply = LocalPlayer()
-
     if ply:InVehicle() then return end
 
     local ent = self:GetClosestEnt()
-
     if not IsValid( ent ) then return end
 
     local pos = ent:LocalToWorld( ent:OBBCenter() )
-
     local scr = pos:ToScreen()
     local scrWH = ScrW() / 2
     local scrHH = ScrH() / 2
@@ -425,12 +426,10 @@ function SWEP:DrawHUD()
     local size = 0
     if self:GetIsLocked() then
         size = lockedSize
-
     else
         local untilLocked = self:GetLockedOnTime() - CurTime()
         local normalized = untilLocked / stingerLockTime:GetFloat()
         size = math.Clamp( lockedSize + ( normalized * difference ), lockedSize, notLockedSize )
-
     end
 
     surface.DrawLine( posX - size, posY + size, posX - size * 0.5, posY + size )
@@ -442,9 +441,8 @@ function SWEP:DrawHUD()
     surface.DrawLine( posX + size, posY + size, posX + size, posY + size * 0.5 )
     surface.DrawLine( posX + size, posY - size, posX + size, posY - size * 0.5 )
 
-    surface.DrawLine( posX - size, posY - size, posX - size * 0.5, posY - size )
-    surface.DrawLine( posX + size, posY - size, posX + size * 0.5, posY - size )
-
+    surface.DrawLine( X - size, Y - size, X - size * 0.5, Y - size )
+    surface.DrawLine( X + size, Y - size, X + size * 0.5, Y - size )
 
     posX = posX + 1
     posY = posY + 1
