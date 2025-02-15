@@ -10,9 +10,16 @@ function ENT:SetupDataTables()
     self:NetworkVar( "Entity", 0, "Attacker" )
     self:NetworkVar( "Entity", 1, "Inflictor" )
     self:NetworkVar( "Entity", 2, "LockOn" )
+
+    if not SERVER then return end
+
+    self:NetworkVarNotify( "LockOn", self.OnLockOnChange )
 end
 
 if SERVER then
+    function ENT:OnLockOnChange( _, _, new )
+        self:SetHasTarget( IsValid( new ) )
+    end
 
     local stingerDmgMulCVar = CreateConVar( "cfc_stinger_damage_mul", 1, FCVAR_ARCHIVE )
     local stingerMobilityMulCVar = CreateConVar( "cfc_stinger_mobility_mul", 1, FCVAR_ARCHIVE )
@@ -24,7 +31,7 @@ if SERVER then
 
     local BLAST_DAMAGE = 150
     local BLAST_RADIUS = 200
-    local DIRECTHIT_GENERIC_DAMAGE = 800
+    local DIRECTHIT_GENERIC_DAMAGE = 700
     local DIRECTHIT_CAR_DAMAGE = 1250
     local DIRECTHIT_NPC_DAMAGE = 200
     local DIRECTHIT_PLAYER_DAMAGE = 70 -- ends up getting added with the blastdamage, doesn't need to be too strong
@@ -35,18 +42,18 @@ if SERVER then
     local BLINDFIRE_ANGVEL_DECAY = 0.98
     local MAX_BLINDFIRE_SPEED = 3000
 
-    local LOCKED_TURNRATE_ADDED_PER_SECOND_ALIVE = 75
-    local LOCKED_SPEED_ADDED_PER_SECOND_ALIVE = 650
+    local LOCKED_TURNRATE_ADDED_PER_SECOND_ALIVE = 45
+    local LOCKED_SPEED_ADDED_PER_SECOND_ALIVE = 500
     local LOCKED_MAX_TURNRATE_ADDED = 400
     local LOCKED_MAX_SPEED_ADDED = 10000
     local LOCKED_DEFAULT_SPEED = 1500
     local LOCKED_DEFAULT_TURNRATE = 20
     local LOCKED_TARGET_LEAD_MUL = 0.15
-    local LOCKED_LOSE_TARGET_ANG = 85
+    local LOCKED_LOSE_TARGET_ANG = 50
     local LOCKED_START_CHECKING_TRACES_DIST = 750^2
     local LOCKED_DETONATE_ANYWAYS_DIST = 75^2
 
-    local GLIDE_FLARE_YIELD_RADIUS = 800 -- glide homing missiles are 1500 dist
+    local GLIDE_FLARE_YIELD_RADIUS = 1150 -- glide homing missiles are 1500 dist
 
     local GetClosestFlare
     if Glide then
@@ -384,6 +391,8 @@ else -- client
             effectdata:SetOrigin( self:GetPos() )
             effectdata:SetEntity( self )
         util.Effect( "cfc_stinger_trail", effectdata, true, true )
+
+        self:SetHasTarget( true ) -- glide lockon sound hack that styled recommended
     end
 
     function ENT:Draw()
